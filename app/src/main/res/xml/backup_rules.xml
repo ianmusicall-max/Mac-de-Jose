@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include
+        domain="database"
+        path="videovault.db" />
+    <include
+        domain="sharedpref"
+        path="." />
+    <exclude
+        domain="file"
+        path="downloads/" />
+</full-backup-content>

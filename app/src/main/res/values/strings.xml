@@ -1,0 +1,97 @@
+<resources>
+    <string name="app_name">VideoVault</string>
+
+    <!-- Navigation -->
+    <string name="tab_home">Link</string>
+    <string name="tab_browser">Browser</string>
+    <string name="tab_downloads">Downloads</string>
+    <string name="tab_statuses">Statuses</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Home -->
+    <string name="home_title">Paste a link</string>
+    <string name="home_hint">https://…</string>
+    <string name="home_detect">Detect media</string>
+    <string name="home_paste">Paste</string>
+    <string name="home_clear">Clear</string>
+    <string name="home_clipboard_found">Link found in clipboard</string>
+    <string name="home_clipboard_use">Use it</string>
+    <string name="home_recent">Recent links</string>
+    <string name="home_empty_recent">Links you detect show up here.</string>
+    <string name="home_no_media">No downloadable media found on that page.</string>
+    <string name="home_invalid_url">That does not look like a web address.</string>
+
+    <!-- Results -->
+    <string name="results_title">Found media</string>
+    <string name="results_download">Download</string>
+    <string name="results_download_all">Download all</string>
+    <string name="results_unknown_size">Size unknown</string>
+
+    <!-- Browser -->
+    <string name="browser_hint">Search or type a web address</string>
+    <string name="browser_found_one">1 media file on this page</string>
+    <string name="browser_found_many">%1$d media files on this page</string>
+    <string name="browser_desktop_site">Desktop site</string>
+    <string name="browser_reload">Reload</string>
+    <string name="browser_back">Back</string>
+    <string name="browser_forward">Forward</string>
+    <string name="browser_deep_scan">Deep scan</string>
+
+    <!-- Downloads -->
+    <string name="downloads_active">In progress</string>
+    <string name="downloads_finished">Saved</string>
+    <string name="downloads_empty">Nothing downloaded yet.</string>
+    <string name="downloads_pause">Pause</string>
+    <string name="downloads_resume">Resume</string>
+    <string name="downloads_retry">Retry</string>
+    <string name="downloads_cancel">Cancel</string>
+    <string name="downloads_delete">Delete</string>
+    <string name="downloads_share">Share</string>
+    <string name="downloads_play">Play</string>
+    <string name="downloads_clear_finished">Clear finished</string>
+
+    <!-- Statuses -->
+    <string name="statuses_title">Status saver</string>
+    <string name="statuses_pick_folder">Choose statuses folder</string>
+    <string name="statuses_explain">Pick the folder your messaging app keeps statuses in, then save the ones you want to keep.</string>
+    <string name="statuses_empty">No statuses right now. Open a chat app first so the files land on the device.</string>
+    <string name="statuses_save">Save</string>
+    <string name="statuses_saved">Saved to your gallery</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Use wallpaper colours</string>
+    <string name="settings_downloads">Downloads</string>
+    <string name="settings_wifi_only">Download over Wi-Fi only</string>
+    <string name="settings_max_parallel">Parallel downloads</string>
+    <string name="settings_save_to_gallery">Show downloads in gallery</string>
+    <string name="settings_clipboard_watch">Offer clipboard links</string>
+    <string name="settings_notifications">Progress notification</string>
+    <string name="settings_privacy">Data</string>
+    <string name="settings_clear_history">Clear link history</string>
+    <string name="settings_clear_cookies">Clear browser data</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_legal">Only download media you own or have permission to save, and follow the terms of the sites you visit.</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_progress">Download progress</string>
+    <string name="notif_channel_done">Finished downloads</string>
+    <string name="notif_downloading">Downloading %1$s</string>
+    <string name="notif_downloading_many">Downloading %1$d files</string>
+    <string name="notif_done">Download finished</string>
+    <string name="notif_failed">Download failed</string>
+
+    <plurals name="queued_items">
+        <item quantity="one">1 download queued</item>
+        <item quantity="other">%1$d downloads queued</item>
+    </plurals>
+
+    <!-- Shared -->
+    <string name="action_dismiss">Dismiss</string>
+    <string name="error_generic">Something went wrong: %1$s</string>
+</resources>
