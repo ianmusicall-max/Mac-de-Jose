@@ -38,10 +38,10 @@ class InstagramResolver : MediaResolver {
 
         var lastError: String? = null
         for (page in pages) {
-            val html = runCatching { fetch(page) }.getOrElse { error ->
-                lastError = error.message
-                continue
-            }
+            val html = runCatching { fetch(page) }
+                .onFailure { error -> lastError = error.message }
+                .getOrNull()
+                ?: continue
 
             val candidates = parse(html, shortcode)
             if (candidates.isNotEmpty()) {
