@@ -1,5 +1,7 @@
 # VideoVault
 
+[![Android CI](https://github.com/ianmusicall-max/Mac-de-Jose/actions/workflows/android.yml/badge.svg)](https://github.com/ianmusicall-max/Mac-de-Jose/actions/workflows/android.yml)
+
 Aplicación Android para descargar vídeo, audio e imágenes desde páginas web:
 pega un enlace, navega con el navegador integrado o comparte una URL desde otra
 app, y VideoVault encuentra el archivo, lo descarga y lo deja en la galería.
@@ -73,10 +75,15 @@ sdk.dir=/ruta/a/tu/Android/sdk
 ./gradlew installDebug         # instalar en un dispositivo conectado
 ```
 
-> Este repositorio se escribió en un contenedor sin Android SDK y sin acceso a
-> `dl.google.com`, así que el proyecto **no se ha compilado todavía**: la primera
-> compilación local puede necesitar ajustes de versiones. Todo lo demás (lógica,
-> recursos, manifiesto) está completo.
+### Sin instalar nada: descargar el APK de GitHub
+
+Cada push a cualquier rama lanza el workflow `Android CI`, que ejecuta los tests
+y compila el APK de depuración. Para bajarlo:
+
+1. Pestaña **Actions** del repositorio → run más reciente de *Android CI*.
+2. Abajo, en **Artifacts**, descarga `videovault-debug-apk` (es un `.zip`).
+3. Descomprime y abre `app-debug.apk` en el móvil. Android pedirá permitir la
+   instalación desde la app con la que lo abras (Archivos, Drive, Chrome…).
 
 ## Versiones
 
