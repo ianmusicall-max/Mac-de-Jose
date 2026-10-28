@@ -75,7 +75,7 @@
     <string name="settings_clear_history">Clear link history</string>
     <string name="settings_clear_cookies">Clear browser data</string>
     <string name="settings_about">About</string>
-    <string name="settings_version">Version %1$s</string>
+    <string name="settings_version">Version %1$s · build %2$s</string>
     <string name="settings_legal">Only download media you own or have permission to save, and follow the terms of the sites you visit.</string>
 
     <!-- Notifications -->

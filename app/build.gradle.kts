@@ -17,10 +17,27 @@ android {
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+
+        // Lets a screenshot say which build it came from.
+        val buildId = System.getenv("GITHUB_SHA")?.take(7) ?: "local"
+        buildConfigField("String", "BUILD_ID", "\"$buildId\"")
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            // Checked into the repository on purpose: without a fixed key, every CI
+            // build is signed with a throwaway one and Android refuses to install
+            // the new APK over the old. Debug keys are public by design.
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
         debug {
+            signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }

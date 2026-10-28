@@ -180,7 +180,13 @@ fun SettingsScreen(
         item {
             ListItem(
                 headlineContent = {
-                    Text(stringResource(R.string.settings_version, BuildConfig.VERSION_NAME))
+                    Text(
+                        stringResource(
+                            R.string.settings_version,
+                            BuildConfig.VERSION_NAME,
+                            BuildConfig.BUILD_ID,
+                        ),
+                    )
                 },
                 supportingContent = { Text(stringResource(R.string.settings_legal)) },
             )
