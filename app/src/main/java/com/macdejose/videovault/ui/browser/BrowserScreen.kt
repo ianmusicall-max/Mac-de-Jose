@@ -1,6 +1,7 @@
 package com.macdejose.videovault.ui.browser
 
 import android.annotation.SuppressLint
+import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -101,6 +102,10 @@ fun BrowserScreen(
                 SnifferBridge.NAME,
             )
 
+            // Without this, a site that sets its session cookie through an
+            // embedded frame loses it on every navigation.
+            CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+
             webChromeClient = object : WebChromeClient() {
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
                     viewModel.onProgress(newProgress)
@@ -108,6 +113,18 @@ fun BrowserScreen(
             }
 
             webViewClient = object : WebViewClient() {
+                /**
+                 * Links with a custom scheme (intent://, market://, whatsapp://)
+                 * cannot be rendered; letting the WebView try shows an error page.
+                 */
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                ): Boolean {
+                    val scheme = request?.url?.scheme?.lowercase()
+                    return scheme != null && scheme != "http" && scheme != "https"
+                }
+
                 override fun onPageStarted(
                     view: WebView?,
                     url: String?,

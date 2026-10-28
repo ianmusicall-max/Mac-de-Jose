@@ -18,7 +18,7 @@
     <string name="home_clipboard_use">Use it</string>
     <string name="home_recent">Recent links</string>
     <string name="home_empty_recent">Links you detect show up here.</string>
-    <string name="home_no_media">No downloadable media found on that page.</string>
+    <string name="home_no_media">No media found. Private posts and stories need a signed-in session, which this app does not have.</string>
     <string name="home_invalid_url">That does not look like a web address.</string>
 
     <!-- Results -->

@@ -7,6 +7,7 @@ package com.macdejose.videovault.resolver
  */
 class MediaResolverChain(
     private val resolvers: List<MediaResolver> = listOf(
+        InstagramResolver(),
         HlsResolver(),
         DirectLinkResolver(),
         HtmlMediaResolver(),
