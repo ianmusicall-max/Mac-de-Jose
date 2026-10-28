@@ -33,7 +33,9 @@ jobs:
       - name: Set up the Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "tools platform-tools platforms;android-36"
+          # 'tools' is the retired SDK Tools package and no longer resolves;
+          # the build tools themselves are pulled in by AGP.
+          packages: "platform-tools platforms;android-36"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
