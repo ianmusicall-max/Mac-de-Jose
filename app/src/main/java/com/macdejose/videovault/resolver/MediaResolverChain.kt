@@ -1,5 +1,7 @@
 package com.macdejose.videovault.resolver
 
+import kotlinx.coroutines.CancellationException
+
 /**
  * Tries each resolver in order and returns the first useful answer. Failures are
  * remembered so that, if nothing at all works, the user sees a real reason
@@ -23,7 +25,14 @@ class MediaResolverChain(
 
         for (resolver in resolvers) {
             if (!resolver.canHandle(url)) continue
-            when (val result = resolver.resolve(url)) {
+            val result = try {
+                resolver.resolve(url)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                ResolveResult.Failure(error.message ?: "Could not read this link", error)
+            }
+            when (result) {
                 is ResolveResult.Found -> if (result.candidates.isNotEmpty()) return result
                 is ResolveResult.Failure -> lastFailure = result
                 ResolveResult.Empty -> Unit

@@ -1,24 +1,37 @@
 # AGENTS.md
 
-Instrucciones para agentes de código (OpenAI Codex y similares) en este
-repositorio. Equivalente de `CLAUDE.md` para Claude Code: léelo antes de
-tocar nada.
+VideoVault es una app Android propia, escrita desde cero con Kotlin y Jetpack
+Compose, para descargar vídeo, audio e imágenes. `web/` contiene la versión web.
 
-## El proyecto, en una línea
+## Android
 
-VideoVault: app Android (Kotlin + Jetpack Compose, Gradle) para descargar
-vídeo, audio e imágenes desde páginas web. Detalle completo en `README.md`.
+Requiere JDK 17+ y Android SDK API 36. Configura `sdk.dir` en `local.properties`
+(archivo local ignorado por Git, sin comentarios al final de la ruta).
 
-## Por completar
+- `./gradlew test`: pruebas unitarias.
+- `./gradlew assembleDebug`: APK en `app/build/outputs/apk/debug/app-debug.apk`.
+- `./gradlew installDebug`: instalar en dispositivo Android conectado.
 
-Este repositorio no tenía `CLAUDE.md`, así que lo de arriba es solo lo que
-se puede leer del `README.md`. Lo que falta, y conviene agregar la próxima
-vez que se trabaje aquí:
+En `app/src/main/java/com/macdejose/videovault/`:
 
-- Cómo compilar y correr las pruebas (`./gradlew test`, `./gradlew build`,
-  y lo que haga falta más allá de eso).
-- La estructura de `app/` y dónde vive cada capa (UI, descarga, almacenamiento).
-- Qué revisa el workflow de CI en `.github/workflows/android.yml` y qué
-  tiene que seguir pasando en verde.
-- Cualquier decisión de diseño ya tomada que un agente nuevo repetiría por
-  error (por ejemplo, por qué es una implementación propia y no un fork).
+- `ui/`: pantallas Compose y ViewModels.
+- `resolver/`: cadena de detección, Instagram, HTML, HLS y enlaces directos.
+- `download/`: cola, descarga HTTP/HLS, servicio, notificaciones y FileStore.
+- `data/db/`: Room; `data/prefs/`: ajustes DataStore; `data/repo/`: acceso desde UI.
+- `statuses/`: lectura de estados mediante SAF.
+- `AppContainer`: inyección manual de dependencias.
+
+CI (`.github/workflows/android.yml`) ejecuta `test` y `assembleDebug` con JDK 17
+y SDK 36; sube `videovault-debug-apk` y reportes si falla. Pushes solo de Markdown
+no lanzan ese workflow. No ejecuta pruebas en dispositivo.
+
+La firma debug fija es intencional para instalar actualizaciones sobre APKs
+anteriores. No utilizarla para publicación release. Las descargas HLS cifradas
+se rechazan. Mantener la cancelación de corrutinas y la unicidad de archivos.
+
+## Web
+
+Ver `web/README.md`. Usa Node 22.13+, React/Vinext y Cloudflare Workers a través
+de Sites. Comprobar con `node --test tests/media.test.ts`, `npx tsc --noEmit` y
+`npm run build` dentro de `web/`. Mantener la validación de destinos públicos,
+redirecciones, tipos multimedia y tamaño máximo del HTML.

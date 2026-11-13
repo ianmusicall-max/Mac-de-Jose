@@ -1,0 +1,60 @@
+import {remote,kind,publicUrl} from '@/lib/media';
+import {OriginRateLimitError} from '@/lib/rate-limit';
+import {bucket,storedResponse,storedHeaders,sharedBackoff} from '@/lib/server-storage';
+import {digest} from '@/lib/archive';
+import {readImage,assertCompleteImage,assertFullResponse,imageExtension,IncompleteImageError,MAX_IMAGE_BYTES} from '@/lib/image-file';
+async function cachedFile(id:string,rangeHeader:string|null,inline:boolean):Promise<Response|null>{
+ if(rangeHeader){
+  const head=await bucket().head('files/'+id);
+  const type=head?.httpMetadata?.contentType||'';
+  if(head&&type.startsWith('video/')){
+   const match=/^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
+   if(!match)return new Response(null,{status:416,headers:{'Content-Range':`bytes */${head.size}`,'Accept-Ranges':'bytes'}});
+   const start=match[1]?Number(match[1]):Math.max(0,head.size-Number(match[2]||0));
+   const end=match[2]&&match[1]?Math.min(Number(match[2]),head.size-1):head.size-1;
+   if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||start>=head.size||end<start)return new Response(null,{status:416,headers:{'Content-Range':`bytes */${head.size}`,'Accept-Ranges':'bytes'}});
+   const length=end-start+1;const object=await bucket().get('files/'+id,{range:{offset:start,length}});if(!object)return null;
+   const headers=storedHeaders(head);headers.set('Accept-Ranges','bytes');headers.set('Content-Range',`bytes ${start}-${end}/${head.size}`);headers.set('Content-Length',String(length));if(inline)headers.set('Content-Disposition','inline');
+   return new Response(object.body,{status:206,headers});
+  }
+ }
+ const object=await bucket().get('files/'+id);if(!object)return null;
+ if((object.httpMetadata?.contentType||'').startsWith('image/')&&object.size<=MAX_IMAGE_BYTES){
+  const data=new Uint8Array(await object.arrayBuffer());
+  try{assertCompleteImage(data,object.httpMetadata?.contentType||'',object.size);}
+  catch{await bucket().delete('files/'+id);return null;}
+  return new Response(data,{headers:storedHeaders(object)});
+ }
+ return storedResponse(object);
+}
+export async function GET(request:Request){
+ try{
+  const params=new URL(request.url).searchParams;const id=params.get('id');const raw=params.get('url');
+  const inline=params.get('inline')==='1';
+  const finish=(response:Response)=>{const type=response.headers.get('content-type')||'';if(inline&&(type.startsWith('image/')||type.startsWith('video/')))response.headers.set('Content-Disposition','inline');return response;};
+  if(id&&!/^[a-f0-9]{64}$/.test(id))throw new Error('Identificador de archivo inválido.');
+  if(id){const saved=await cachedFile(id,request.headers.get('range'),inline);if(saved)return finish(saved);}
+  if(!raw)throw new Error('El archivo guardado no está disponible. Vuelve a buscar el enlace.');
+  const url=publicUrl(raw).href;const assetId=await digest(url);
+  if(id&&id!==assetId)throw new Error('El archivo guardado no está disponible.');
+  const saved=await cachedFile(assetId,request.headers.get('range'),inline);if(saved)return finish(saved);
+  const response=await remote(url,{headers:{'Accept-Encoding':'identity'}},10*60_000,sharedBackoff);
+  const type=response.headers.get('content-type')||'';
+  if(!kind(type)){await response.body?.cancel();throw new Error('El destino no es un archivo multimedia descargable.');}
+  try{assertFullResponse(response.status,response.headers.get('content-range'));}catch(error){await response.body?.cancel();throw error;}
+  let filename=new URL(url).pathname.split('/').pop()?.replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,100)||'videovault';
+  if(type.startsWith('image/')){
+   filename=filename.replace(/\.[^.]+$/,'')+'.'+imageExtension(type);
+   const data=await readImage(response);
+   await bucket().put('files/'+assetId,data,{httpMetadata:{contentType:type},customMetadata:{filename}});
+   return finish(new Response(data,{headers:{'Content-Type':type,'Content-Length':String(data.length),'Content-Disposition':`attachment; filename="${filename}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}}));
+  }
+  const length=Number(response.headers.get('content-length'));
+  if(!length||length>100*1024*1024)return finish(new Response(response.body,{headers:{'Content-Type':type,'Content-Disposition':`attachment; filename="${filename}"`,'Cache-Control':'no-store'}}));
+  await bucket().put('files/'+assetId,response.body,{httpMetadata:{contentType:type},customMetadata:{filename}});
+  const object=await bucket().get('files/'+assetId);
+  if(!object)throw new Error('No se pudo guardar la descarga.');
+  if(object.size!==length){await bucket().delete('files/'+assetId);throw new IncompleteImageError('El archivo llegó incompleto. Vuelve a intentarlo.');}
+  return storedResponse(object);
+ }catch(error){return new Response(error instanceof Error?error.message:'No se pudo descargar.',{status:error instanceof OriginRateLimitError?429:error instanceof IncompleteImageError?502:400,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store',...(error instanceof OriginRateLimitError?{'Retry-After':String(error.retryAfter)}:{})}});}
+}

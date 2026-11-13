@@ -1,0 +1,4 @@
+.result-video{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center}
+.result-video .video-preview{grid-column:1/-1;display:block;width:100%;max-height:420px;aspect-ratio:16/9;object-fit:contain;background:#141414;border-radius:8px}
+.result-video>.download{grid-column:1/-1;justify-self:end}
+@media(max-width:640px){.result-video .video-preview{max-height:300px}}

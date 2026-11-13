@@ -31,7 +31,7 @@ class FileStore(private val context: Context) {
         val base = sanitize(title).ifEmpty { "video" }
         var candidate = File(downloadDir, "$base.$extension")
         var counter = 1
-        while (candidate.exists()) {
+        while (!candidate.createNewFile()) {
             candidate = File(downloadDir, "$base-$counter.$extension")
             counter++
         }

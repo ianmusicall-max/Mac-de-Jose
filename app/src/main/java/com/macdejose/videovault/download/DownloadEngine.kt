@@ -14,9 +14,13 @@ import com.macdejose.videovault.resolver.Http
 import com.macdejose.videovault.resolver.MediaCandidate
 import com.macdejose.videovault.resolver.UrlUtils
 import java.io.File
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +47,7 @@ class DownloadEngine(
     private val hlsDownloader = HlsDownloader()
     private val jobs = mutableMapOf<Long, Job>()
     private val lock = Mutex()
+    private val pumpLock = Mutex()
 
     private val _activeCount = MutableStateFlow(0)
     val activeCount: StateFlow<Int> = _activeCount.asStateFlow()
@@ -94,7 +99,7 @@ class DownloadEngine(
     }
 
     suspend fun pause(id: Long) {
-        lock.withLock { jobs.remove(id) }?.cancel()
+        lock.withLock { jobs.remove(id) }?.cancelAndJoin()
         dao.updateStatus(id, DownloadStatus.PAUSED)
         refreshActiveCount()
         pump()
@@ -116,7 +121,7 @@ class DownloadEngine(
     }
 
     suspend fun cancel(id: Long, deleteFile: Boolean = true) {
-        lock.withLock { jobs.remove(id) }?.cancel()
+        lock.withLock { jobs.remove(id) }?.cancelAndJoin()
         val download = dao.find(id)
         if (deleteFile) {
             download?.localPath?.let { File(it).delete() }
@@ -135,7 +140,7 @@ class DownloadEngine(
     /** Starts as many queued downloads as the user's settings allow. */
     fun pumpAsync() = scope.launch { pump() }
 
-    suspend fun pump() {
+    suspend fun pump(): Unit = pumpLock.withLock {
         val settings = settingsRepository.settings.first()
         if (!hasUsableNetwork(settings)) {
             if (lock.withLock { jobs.isEmpty() }) {
@@ -146,7 +151,7 @@ class DownloadEngine(
                     )
                 }
             }
-            return
+            return@withLock
         }
 
         while (true) {
@@ -164,29 +169,29 @@ class DownloadEngine(
         val target = download.localPath?.let(::File) ?: return
         dao.updateStatus(download.id, DownloadStatus.RUNNING, error = null)
 
-        val job = scope.launch {
-            val request = DownloadRequest(
-                url = download.mediaUrl,
-                target = target,
-                referer = download.referer,
-                userAgent = download.userAgent ?: Http.DESKTOP_UA,
-            )
+        val job = scope.launch(start = CoroutineStart.LAZY) {
+            try {
+                val request = DownloadRequest(
+                    url = download.mediaUrl,
+                    target = target,
+                    referer = download.referer,
+                    userAgent = download.userAgent ?: Http.DESKTOP_UA,
+                )
 
-            val outcome = runDownload {
-                if (download.isHls) {
-                    hlsDownloader.download(request) { done, total ->
-                        dao.updateProgress(download.id, done, total)
+                val outcome = runDownload {
+                    val bytes = if (download.isHls) {
+                        hlsDownloader.download(request) { done, total ->
+                            dao.updateProgress(download.id, done, total)
+                        }
+                    } else {
+                        httpDownloader.download(request) { done, total ->
+                            dao.updateProgress(download.id, done, total)
+                        }
                     }
-                } else {
-                    httpDownloader.download(request) { done, total ->
-                        dao.updateProgress(download.id, done, total)
-                    }
+                    complete(download, target, bytes, settings)
                 }
-            }
 
-            outcome
-                .onSuccess { bytes -> complete(download, target, bytes, settings) }
-                .onFailure { error ->
+                outcome.onFailure { error ->
                     dao.updateStatus(
                         download.id,
                         DownloadStatus.FAILED,
@@ -198,13 +203,20 @@ class DownloadEngine(
                         error.message ?: "Download failed",
                     )
                 }
-
-            lock.withLock { jobs.remove(download.id) }
-            refreshActiveCount()
-            pump()
+            } finally {
+                val finishingJob = kotlin.coroutines.coroutineContext[Job]
+                withContext(NonCancellable) {
+                    lock.withLock {
+                        if (jobs[download.id] === finishingJob) jobs.remove(download.id)
+                    }
+                    refreshActiveCount()
+                }
+                pumpAsync()
+            }
         }
 
         lock.withLock { jobs[download.id] = job }
+        job.start()
         refreshActiveCount()
     }
 

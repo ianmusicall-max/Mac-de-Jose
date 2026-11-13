@@ -23,16 +23,24 @@ Kotlin y Jetpack Compose.
 Además: destino del *share sheet* (`text/plain`), servicio en primer plano con
 notificación de progreso, y reanudación por rangos HTTP tras cerrar la app.
 
+## Versión web
+
+La carpeta `web/` contiene una versión para navegador con búsqueda y descarga de
+archivos multimedia públicos e historial local. Consulta `web/README.md` para
+compilarla y ver sus límites. No comparte la cola ni el historial con Android.
+
 ## Cómo encuentra el vídeo
 
-La extracción es genérica, no específica de ninguna plataforma. `MediaResolverChain`
-prueba en orden:
+La extracción combina una estrategia para Instagram con resolvers genéricos.
+`MediaResolverChain` prueba en orden:
 
-1. **`HlsResolver`** – si la URL es un `.m3u8`, expande el *master playlist* en una
+1. **`InstagramResolver`** – busca archivos publicados en el embed de posts y reels
+   públicos; no inicia sesión ni garantiza acceso a todos los posts.
+2. **`HlsResolver`** – si la URL es un `.m3u8`, expande el *master playlist* en una
    opción por calidad (`RESOLUTION`/`BANDWIDTH`).
-2. **`DirectLinkResolver`** – la URL ya apunta a un archivo (`.mp4`, `.webm`, …);
+3. **`DirectLinkResolver`** – la URL ya apunta a un archivo (`.mp4`, `.webm`, …);
    confirma tipo y tamaño con `HEAD` o un `GET` de un byte.
-3. **`HtmlMediaResolver`** – descarga la página y lee lo que ella misma publica:
+4. **`HtmlMediaResolver`** – descarga la página y lee lo que ella misma publica:
    etiquetas OpenGraph (`og:video`), `twitter:player:stream`, elementos
    `<video>`/`<source>`/`<audio>`, `contentUrl` de JSON-LD y URLs de media en
    scripts en línea.
