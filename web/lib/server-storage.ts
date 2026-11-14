@@ -1,4 +1,5 @@
 import {env} from 'cloudflare:workers';
+import {downloadName} from './download-name';
 import {MediaArchive,SharedBackoff,InstagramContext,type ArchiveStorage} from './archive';
 export function bucket():R2Bucket {
   if(!env.BUCKET)throw new Error('El almacenamiento de descargas no está disponible.');
@@ -14,7 +15,7 @@ export const instagramContext=new InstagramContext(storage);
 export const sharedBackoff=new SharedBackoff(storage);
 export function storedHeaders(object:R2Object):Headers {
  const type=object.httpMetadata?.contentType||'application/octet-stream';
- const name=(object.customMetadata?.filename||'videovault').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120);
+ const name=downloadName(object.customMetadata?.filename||'videovault',type);
  return new Headers({'Content-Type':type,'Content-Length':String(object.size),'Content-Disposition':`attachment; filename="${name}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});
 }
 export function storedResponse(object:R2ObjectBody):Response {return new Response(object.body,{headers:storedHeaders(object)});}

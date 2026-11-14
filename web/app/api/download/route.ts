@@ -2,6 +2,7 @@ import {remote,kind,publicUrl} from '@/lib/media';
 import {OriginRateLimitError} from '@/lib/rate-limit';
 import {bucket,storedResponse,storedHeaders,sharedBackoff} from '@/lib/server-storage';
 import {digest} from '@/lib/archive';
+import {downloadName} from '@/lib/download-name';
 import {readImage,assertCompleteImage,assertFullResponse,imageExtension,IncompleteImageError,MAX_IMAGE_BYTES} from '@/lib/image-file';
 async function cachedFile(id:string,rangeHeader:string|null,inline:boolean):Promise<Response|null>{
  if(rangeHeader){
@@ -42,7 +43,7 @@ export async function GET(request:Request){
   const type=response.headers.get('content-type')||'';
   if(!kind(type)){await response.body?.cancel();throw new Error('El destino no es un archivo multimedia descargable.');}
   try{assertFullResponse(response.status,response.headers.get('content-range'));}catch(error){await response.body?.cancel();throw error;}
-  let filename=new URL(url).pathname.split('/').pop()?.replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,100)||'videovault';
+  let filename=downloadName(new URL(url).pathname.split('/').pop()||'videovault',type);
   if(type.startsWith('image/')){
    filename=filename.replace(/\.[^.]+$/,'')+'.'+imageExtension(type);
    const data=await readImage(response);
