@@ -2,6 +2,50 @@
 
 Versión web con React/Vinext y un servicio compatible con Cloudflare Workers. Acepta enlaces HTTPS públicos, detecta archivos por Content-Type y extrae medios publicados en HTML (OpenGraph, video/audio/source y contentUrl/video_url). Las descargas pasan por un endpoint que valida el destino y devuelve el archivo como adjunto sin almacenarlo en el servidor.
 
+## Publicar
+
+El sitio se despliega como un Worker de Cloudflare: la misma pieza sirve las
+páginas y los endpoints `/api/*`. No depende de ChatGPT ni de Sites para que
+alguien pueda entrar; solo el código vive en GitHub, y GitHub dispara el
+despliegue.
+
+`.github/workflows/web.yml` ejecuta tests, tipos, lint y build en cada push que
+toque `web/`, y publica si existen los secretos. Sin ellos compila igual y avisa
+en el resumen del run, pero no publica.
+
+### Pasos, una sola vez
+
+1. Crea una cuenta en Cloudflare.
+2. Activa **R2** y crea un bucket llamado exactamente `videovault-media`.
+   El código lo necesita: guarda ahí los archivos descargados, los resultados
+   reutilizables y las esperas por HTTP 429. Sin ese bucket, `/api/resolve`
+   falla en cada petición. **Cloudflare suele pedir un método de pago para
+   activar R2 aunque te quedes dentro del nivel gratuito.**
+3. Copia tu **Account ID** del panel de Cloudflare.
+4. Crea un **API token** con permiso de edición sobre Workers y lectura y
+   escritura sobre R2. La plantilla de Workers del panel sirve de base; añade
+   R2 encima.
+5. En GitHub, en **Settings → Secrets and variables → Actions**, añade dos
+   secretos del repositorio:
+   - `CLOUDFLARE_API_TOKEN`
+   - `CLOUDFLARE_ACCOUNT_ID`
+6. Haz un push que toque `web/`, o lanza el workflow a mano desde la pestaña
+   Actions.
+
+Queda publicado en `https://videovault.<tu-subdominio>.workers.dev`. Los nombres
+exactos de las pantallas del panel de Cloudflare cambian de vez en cuando; los
+permisos que hacen falta son los de arriba.
+
+### Desde tu propio equipo
+
+```sh
+npx wrangler login
+npm run build
+npx wrangler deploy --config dist/server/wrangler.json
+```
+
+Añade `--dry-run` para validar la configuración sin publicar nada.
+
 ## Estructura
 
 Cada herramienta es una entrada de `lib/tools.ts`, no una página escrita a mano:

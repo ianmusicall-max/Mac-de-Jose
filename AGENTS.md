@@ -31,7 +31,16 @@ se rechazan. Mantener la cancelación de corrutinas y la unicidad de archivos.
 
 ## Web
 
-Ver `web/README.md`. Usa Node 22.13+, React/Vinext y Cloudflare Workers a través
-de Sites. Comprobar con `node --test tests/media.test.ts`, `npx tsc --noEmit` y
-`npm run build` dentro de `web/`. Mantener la validación de destinos públicos,
-redirecciones, tipos multimedia y tamaño máximo del HTML.
+Ver `web/README.md`. Usa Node 22.13+, React/Vinext y Cloudflare Workers.
+Comprobar con `node --test tests/*.test.ts`, `npx tsc --noEmit` y `npm run build`
+dentro de `web/`. Mantener la validación de destinos públicos, redirecciones,
+tipos multimedia y tamaño máximo del HTML.
+
+Cada herramienta es una entrada de `lib/tools.ts`; ese catálogo genera la
+navegación, los metadatos, el texto y los enlaces cruzados de cada ruta. Añadir
+una herramienta es añadir una entrada, no escribir otra página.
+
+CI (`.github/workflows/web.yml`) ejecuta tests, tipos, lint y build, y despliega
+el Worker con `wrangler deploy` cuando existen los secretos `CLOUDFLARE_API_TOKEN`
+y `CLOUDFLARE_ACCOUNT_ID`. El Worker se llama `videovault` y necesita el bucket
+R2 `videovault-media`: sin él `/api/resolve` falla en cada petición.
