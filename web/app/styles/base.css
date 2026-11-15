@@ -1,0 +1,103 @@
+/* Design tokens. Every colour in the site resolves to one of these. */
+:root {
+  --green-900: #214b38;
+  --green-800: #284e37;
+  --green-700: #3e6648;
+  --green-500: #68ad81;
+  --green-300: #95ac87;
+  --green-100: #edf3e9;
+  --green-050: #f6f8f5;
+
+  --ink: #22332d;
+  --ink-soft: #5d6b60;
+  --ink-mute: #7f8b80;
+  --line: #e0e6df;
+  --line-soft: #eef1ec;
+  --surface: #ffffff;
+
+  --warn-ink: #8a4c2d;
+  --warn-line: #e6cdb8;
+  --warn-bg: #fff8f1;
+
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shell: 1080px;
+
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  background: var(--green-050);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a {
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--green-500);
+  outline-offset: 4px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

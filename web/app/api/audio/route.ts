@@ -20,7 +20,7 @@ export async function GET(request:Request){
   if(!id){if(!url)throw new AudioExtractionError('Falta el vídeo del que extraer audio.');id=await digest(url);}
   const audioKey='audio/'+id+'.m4a';
   const saved=await bucket().get(audioKey);if(saved)return storedResponse(saved);
-  let source=await bucket().get('files/'+id);
+  const source=await bucket().get('files/'+id);
   let data:ArrayBuffer;
   if(source){
    if(source.size>MAX_AUDIO_SOURCE_BYTES)throw new AudioExtractionError('La extracción de audio admite vídeos de hasta 32 MB.');

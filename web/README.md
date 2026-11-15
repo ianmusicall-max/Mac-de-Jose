@@ -2,6 +2,23 @@
 
 Versión web con React/Vinext y un servicio compatible con Cloudflare Workers. Acepta enlaces HTTPS públicos, detecta archivos por Content-Type y extrae medios publicados en HTML (OpenGraph, video/audio/source y contentUrl/video_url). Las descargas pasan por un endpoint que valida el destino y devuelve el archivo como adjunto sin almacenarlo en el servidor.
 
+## Estructura
+
+Cada herramienta es una entrada de `lib/tools.ts`, no una página escrita a mano:
+ese catálogo genera la navegación, los enlaces cruzados, los metadatos y el texto
+de cada ruta. Añadir una herramienta es añadir una entrada y una página de tres
+líneas que la pasa a `ToolPage`.
+
+- `/` hub, `/reel`, `/video`, `/foto`, `/audio`: misma plantilla, distinto formato
+  inicial del descargador.
+- `/privacidad`, `/terminos`: páginas estáticas enlazadas desde el pie.
+- `components/downloader.tsx`: todo el estado del formulario y de los resultados.
+- `components/sections/`: pasos, ventajas, enlaces cruzados y FAQ.
+- `app/styles/`: tokens en `base.css`, luego `layout`, `downloader` y `sections`.
+  Los colores salen de variables CSS; no añadas hex sueltos.
+
+El FAQ usa `<details>` para que funcione sin JavaScript.
+
 ## Desarrollo
 
 Requiere Node 22.13+ y npm.

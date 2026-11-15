@@ -1,0 +1,259 @@
+/* Hero and the supporting bands below the downloader. */
+.hero {
+  margin-bottom: 30px;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.3px;
+  color: #53755b;
+}
+
+.eyebrow > span {
+  width: 6px;
+  height: 6px;
+  background: #85a37c;
+  border-radius: 50%;
+}
+
+h1 {
+  font-size: clamp(38px, 5vw, 60px);
+  letter-spacing: -2.5px;
+  line-height: 1.08;
+  font-weight: 600;
+  margin: 22px 0 18px;
+}
+
+h1 > span {
+  color: #77936c;
+}
+
+.hero-intro {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  max-width: 62ch;
+}
+
+.band {
+  margin-top: 52px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.band-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 22px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px;
+  counter-reset: step;
+}
+
+.step-number {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-700);
+  letter-spacing: 1px;
+}
+
+.steps h3 {
+  font-size: 14px;
+  font-weight: 650;
+  margin: 10px 0 7px;
+}
+
+.steps p,
+.benefits p {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--ink-mute);
+}
+
+.benefits {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.benefit-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--green-100);
+  color: var(--green-700);
+  margin-bottom: 12px;
+}
+
+.benefits h3 {
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 7px;
+}
+
+.tool-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tool-link {
+  display: block;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tool-link:hover {
+  border-color: var(--green-300);
+}
+
+.tool-link h3 {
+  font-size: 14px;
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+
+.tool-link p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-mute);
+  margin-bottom: 12px;
+}
+
+.tool-link-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green-700);
+}
+
+.faq {
+  border-top: 1px solid var(--line-soft);
+}
+
+.faq details {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.faq summary {
+  cursor: pointer;
+  padding: 16px 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A rotating chevron drawn in CSS, so the accordion needs no icon component. */
+.faq summary::after {
+  content: '';
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--ink-mute);
+  border-bottom: 2px solid var(--ink-mute);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.faq details[open] summary::after {
+  transform: rotate(-135deg) translate(-2px, -2px);
+}
+
+.faq summary h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.faq details p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--ink-mute);
+  padding: 0 28px 18px 0;
+  max-width: 78ch;
+}
+
+.legal {
+  max-width: 70ch;
+}
+
+.legal h2 {
+  font-size: 15px;
+  margin: 30px 0 10px;
+}
+
+.legal p,
+.legal li {
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+
+.legal li {
+  padding-left: 18px;
+  position: relative;
+}
+
+.legal li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--green-300);
+}
+
+@media (max-width: 860px) {
+  .steps,
+  .benefits,
+  .tool-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  h1 {
+    font-size: 40px;
+    letter-spacing: -2px;
+  }
+
+  .hero-intro {
+    font-size: 14px;
+  }
+
+  .steps,
+  .benefits,
+  .tool-links {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .band {
+    margin-top: 40px;
+  }
+}
