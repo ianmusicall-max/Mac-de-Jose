@@ -91,6 +91,16 @@ dos minutos y se unen búsquedas simultáneas del mismo enlace, dentro de cada
 instancia de Worker. No se reintenta automáticamente ni se garantiza que el sitio
 levante sus restricciones al terminar el contador.
 
+Las variantes de un enlace de Instagram (parámetros de seguimiento, dominio sin
+www y rutas de Reel) comparten una búsqueda por publicación. Las actualizaciones
+simultáneas se unen dentro de la instancia. Si una actualización recibe 429, se
+conservan los resultados previos y se devuelve el tiempo de espera también en la
+respuesta exitosa de respaldo. La interfaz conserva esa espera al recargar y no
+permite actualizar álbumes durante ella; buscar archivos guardados sigue disponible.
+Los registros de fallos identifican la etapa (página, consulta pública o embed),
+sin incluir tokens, contenido ni URL de publicación. Estas medidas reducen las
+consultas evitables, pero no eliminan las restricciones impuestas por Instagram.
+
 Para publicaciones de Instagram, si el HTML original no contiene vídeo se consulta
 su API de lectura pública usando el token anónimo publicado en ese HTML (sin cookies
 de cuenta). Solo se aceptan medios del campo if_not_gated_logged_out. Si la consulta

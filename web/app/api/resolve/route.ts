@@ -1,21 +1,27 @@
 import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
-import { resolveInstagram, instagramPost, publicInstagramQuery, extractPublicInstagram, type ResolvedMedia } from '@/lib/instagram';
-import { ResolutionCache } from '@/lib/resolution-cache';
+import { resolveInstagram, instagramPost, publicInstagramQuery, extractPublicInstagram } from '@/lib/instagram';
+import { ResolutionService } from '@/lib/resolution-service';
 import {archive,sharedBackoff,instagramContext} from '@/lib/server-storage';
-const cache = new ResolutionCache<ResolvedMedia>();
+async function fetchOrigin(stage:'page'|'query'|'embed',url:string,init?:RequestInit) {
+  try{return await remote(url,init,20_000,sharedBackoff);}
+  catch(error){
+    console.warn('origin_request_failed',{origin:new URL(url).origin,stage,rateLimited:error instanceof OriginRateLimitError,...(error instanceof OriginRateLimitError?{retryAfter:error.retryAfter}:{})});
+    throw error;
+  }
+}
 async function resolve(url: string) {
   const post=instagramPost(url);
   if(post){
     const token=await instagramContext.read();
     const query=token?publicInstagramQuery('',post,token):null;
     if(query){
-      const response=await remote(query.url,query.init,20_000,sharedBackoff);
+      const response=await fetchOrigin('query',query.url,query.init);
       const result=extractPublicInstagram(JSON.parse(await boundedText(response)),post);
       if(result?.items.length)return result;
     }
   }
-  const response = await remote(url,undefined,20_000,sharedBackoff);
+  const response = await fetchOrigin('page',url);
   const type = response.headers.get('content-type') || '';
   const k = kind(type);
   if (k) {
@@ -31,31 +37,21 @@ async function resolve(url: string) {
   const html = await boundedText(response);
   if(post)await instagramContext.record(html);
   return resolveInstagram(response.url || url, html, async embedUrl => {
-    const embed = await remote(embedUrl,undefined,20_000,sharedBackoff);
+    const embed = await fetchOrigin('embed',embedUrl);
     return boundedText(embed);
   }, async query => {
-    const response = await remote(query.url,query.init,20_000,sharedBackoff);
+    const response = await fetchOrigin('query',query.url,query.init);
     const payload = await boundedText(response);
     return JSON.parse(payload) as unknown;
   });
 }
+const service = new ResolutionService(archive,resolve);
 export async function POST(request: Request) {
   try {
     const payload = await request.json() as {url?: unknown;refresh?:boolean;kind?:string};
     const url = publicUrl(String(payload.url));
     url.hash = '';
-    const saved=await archive.find(url.href);
-    const needsImages=payload.kind==='image'&&saved&&instagramPost(url.href)&&(!saved.items.some(item=>item.kind==='image')||saved.albumSize===undefined);
-    if(payload.refresh||needsImages){
-      cache.invalidate(url.href);
-      try{return Response.json(await archive.save(url.href,await resolve(url.href)),{headers:{'Cache-Control':'no-store'}});}
-      catch(error){if(saved&&error instanceof OriginRateLimitError)return Response.json({...saved,albumWarning:'No se pudo actualizar: el origen está limitando las consultas. Se conserva la lista conocida del álbum.'},{headers:{'Cache-Control':'no-store'}});throw error;}
-    }
-    return Response.json(await cache.get(url.href, async () => {
-      if(saved)return saved;
-      const result=await resolve(url.href);
-      return archive.save(url.href,result);
-    }), {headers:{'Cache-Control':'no-store'}});
+    return Response.json(await service.resolve(url.href,!!payload.refresh,payload.kind==='image'), {headers:{'Cache-Control':'no-store'}});
   } catch (e) {
     const limited = e instanceof OriginRateLimitError;
     return Response.json({error:e instanceof Error?e.message:'No se pudo analizar el enlace.', ...(limited?{retryAfter:e.retryAfter}:{})}, {

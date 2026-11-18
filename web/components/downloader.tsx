@@ -5,6 +5,8 @@ import type { Media } from '@/lib/media';
 import { mediaOptions, selectionMessage } from '@/lib/media-selection';
 import { AlbumDownloadButton } from '@/components/image-download';
 import { ResultCard } from '@/components/result-card';
+import { cooldownOrigin as originOf, readCooldown } from '@/lib/cooldown';
+import { sourceKey } from '@/lib/archive';
 
 const KIND_LABEL = { video: 'vídeo', audio: 'audio', image: 'imagen' } as const;
 const KIND_TITLE = { video: 'Vídeos', audio: 'Audios', image: 'Imágenes' } as const;
@@ -22,14 +24,6 @@ type ResolveResponse = {
   fromArchive?: boolean;
   albumWarning?: string;
 };
-
-function originOf(value: string): string {
-  try {
-    return new URL(value).origin;
-  } catch {
-    return '';
-  }
-}
 
 function readHistory(): string[] {
   try {
@@ -61,11 +55,18 @@ export function Downloader({
   const [history, setHistory] = useState<string[]>([]);
   const [cooldown, setCooldown] = useState<{ origin: string; until: number } | null>(null);
   const [now, setNow] = useState(0);
+  const [resultSource, setResultSource] = useState('');
 
   // localStorage has no server-side value, so the list can only be read once the
   // component is mounted.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setHistory(readHistory()), []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHistory(readHistory());
+    try {
+      setCooldown(readCooldown(localStorage.getItem('videovault-cooldown')));
+      setNow(Date.now());
+    } catch { /* Storage may be disabled. */ }
+  }, []);
 
   // Tick once a second only while an origin is actually holding us off.
   useEffect(() => {
@@ -101,17 +102,21 @@ export function Downloader({
 
   async function detect(event: FormEvent, refresh = false) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || (refresh && waiting > 0)) return;
     const link = url.trim();
 
     setBusy(true);
     setError('');
-    setItems([]);
-    setTitle('');
-    setSearched(false);
-    setSourceWarning('');
-    setFromArchive(false);
-    setAlbumWarning('');
+    let sameSource = false;
+    try { sameSource = sourceKey(link) === resultSource; } catch { /* Invalid input is handled by the API. */ }
+    if (!sameSource) {
+      setItems([]);
+      setTitle('');
+      setSearched(false);
+      setSourceWarning('');
+      setFromArchive(false);
+      setAlbumWarning('');
+    }
 
     try {
       const response = await fetch('/api/resolve', {
@@ -121,14 +126,16 @@ export function Downloader({
       });
       const data = (await response.json()) as ResolveResponse;
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          const current = Date.now();
-          setNow(current);
-          setCooldown({ origin: originOf(url), until: current + (data.retryAfter || 60) * 1000 });
-        }
-        throw new Error(data.error);
+      if (data.retryAfter || response.status === 429) {
+        const current = Date.now();
+        const nextCooldown = { origin: originOf(link), until: current + (data.retryAfter || 60) * 1000 };
+        setNow(current);
+        setCooldown(nextCooldown);
+        try { localStorage.setItem('videovault-cooldown', JSON.stringify(nextCooldown)); }
+        catch { /* The in-memory wait remains available. */ }
       }
+      if (!response.ok) throw new Error(data.error || 'No se pudo analizar el enlace.');
+      setResultSource(sourceKey(link));
 
       setItems(data.items);
       setTitle(data.title);
@@ -221,7 +228,7 @@ export function Downloader({
 
       {selected === 'image' && searched && (
         <div className="image-toolbar">
-          <button type="button" className="text-button" disabled={busy} onClick={event => detect(event, true)}>
+          <button type="button" className="text-button" disabled={busy || waiting > 0} onClick={event => detect(event, true)}>
             Actualizar álbum
           </button>
           {visible.length > 1 && <AlbumDownloadButton items={visible} />}
@@ -244,6 +251,9 @@ export function Downloader({
           <p className="notice" role="status">
             {albumWarning}
           </p>
+        )}
+        {sourceWarning && visible.length > 0 && (
+          <p className="notice" role="status">{sourceWarning}</p>
         )}
         {notice && (
           <p className="notice" role="status">
