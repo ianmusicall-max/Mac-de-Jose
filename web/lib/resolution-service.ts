@@ -5,7 +5,7 @@ import type {ResolvedMedia} from './instagram.ts';
 
 /** All requests for a post share one load, including explicit album refreshes. */
 type ResultArchive = {
-  find(url:string):Promise<ResolvedMedia|null>;
+  find(url:string, storedOnly?:boolean):Promise<ResolvedMedia|null>;
   save(url:string,result:ResolvedMedia):Promise<ResolvedMedia>;
 };
 export class ResolutionService {
@@ -15,6 +15,10 @@ export class ResolutionService {
   private load:(url:string)=>Promise<ResolvedMedia>;
   constructor(archive:ResultArchive,load:(url:string)=>Promise<ResolvedMedia>) {
     this.archive=archive;this.load=load;
+  }
+
+  resolveSaved(raw:string):Promise<ResolvedMedia|null> {
+    return this.archive.find(sourceKey(raw),true);
   }
 
   async resolve(raw:string, refresh=false, images=false):Promise<ResolvedMedia> {
@@ -28,7 +32,16 @@ export class ResolutionService {
       if(!refresh&&!needsImages&&saved)return saved;
       if(refresh||needsImages)this.cache.invalidate(key);
       try {
-        return await this.cache.get(key,async()=>this.archive.save(key,await this.load(key)));
+        const result=await this.cache.get(key,async()=>{
+          const loaded=await this.load(key);
+          if(loaded.retryAfter){
+            if(saved)throw new OriginRateLimitError(loaded.retryAfter);
+            return loaded;
+          }
+          return this.archive.save(key,loaded);
+        });
+        if(result.retryAfter)this.cache.invalidate(key);
+        return result;
       } catch(error) {
         if(saved&&error instanceof OriginRateLimitError)return {
           ...saved,

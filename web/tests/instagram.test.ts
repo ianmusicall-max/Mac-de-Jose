@@ -21,7 +21,7 @@ test('does not claim a removed or login-gated embed provides video',async()=>{
  assert.equal(result.items.some(item=>item.kind==='video'),false);assert.match(result.warning!,/Instagram no ha entregado/);
 });
 test('never tries additional endpoints after a rate limit',async()=>{
- await assert.rejects(()=>resolveInstagram(url,cover,async()=>{throw new OriginRateLimitError(60);}),OriginRateLimitError);
+ await assert.rejects(()=>resolveInstagram(url,'',async()=>{throw new OriginRateLimitError(60);}),OriginRateLimitError);
 });
 
 const pageWithToken=cover+'<script>["LSD",[],{"token":"anonymous-test-token"}]</script>';
@@ -43,8 +43,17 @@ test('resolves public query videos before the embed fallback',async()=>{
 });
 test('preserves rate limiting from the anonymous query',async()=>{
  let embeds=0;
- await assert.rejects(()=>resolveInstagram(url,pageWithToken,async()=>{embeds++;return '';},async()=>{throw new OriginRateLimitError(120);}),OriginRateLimitError);
+ const result=await resolveInstagram(url,pageWithToken,async()=>{embeds++;return '';},async()=>{throw new OriginRateLimitError(120);});
+ assert.equal(result.retryAfter,120);
+ assert.equal(result.items[0].isPreview,true);
  assert.equal(embeds,0);
+});
+
+test('keeps a public photo when the embed responds with a rate limit',async()=>{
+ const result=await resolveInstagram(url,'<script>{"display_url":"https://example.com/photo.jpg"}</script>',async()=>{throw new OriginRateLimitError(93);});
+ assert.equal(result.retryAfter,93);
+ assert.equal(result.items[0].url,'https://example.com/photo.jpg');
+ assert.ok(result.albumWarning);
 });
 
 function publicPhotos(nodes:unknown[],count=nodes.length){return {data:{xig_polaris_media:{if_not_gated_logged_out:{carousel_media:nodes,carousel_media_count:count}}}};}

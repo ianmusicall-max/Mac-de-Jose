@@ -104,12 +104,13 @@ export function Downloader({
     event.preventDefault();
     if (busy || (refresh && waiting > 0)) return;
     const link = url.trim();
+    const savedOnly = waiting > 0;
 
     setBusy(true);
     setError('');
     let sameSource = false;
     try { sameSource = sourceKey(link) === resultSource; } catch { /* Invalid input is handled by the API. */ }
-    if (!sameSource) {
+    if (!sameSource || savedOnly) {
       setItems([]);
       setTitle('');
       setSearched(false);
@@ -122,7 +123,7 @@ export function Downloader({
       const response = await fetch('/api/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: link, refresh, kind: selected }),
+        body: JSON.stringify({ url: link, refresh, kind: selected, savedOnly }),
       });
       const data = (await response.json()) as ResolveResponse;
 
@@ -252,7 +253,7 @@ export function Downloader({
             {albumWarning}
           </p>
         )}
-        {sourceWarning && visible.length > 0 && (
+        {sourceWarning && visible.length > 0 && (selected !== 'image' || sourceWarning !== albumWarning) && (
           <p className="notice" role="status">{sourceWarning}</p>
         )}
         {notice && (

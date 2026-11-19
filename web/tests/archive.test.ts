@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {MediaArchive,SharedBackoff,InstagramContext,digest,type ArchiveStorage} from '../lib/archive.ts';
 import {OriginRateLimitError} from '../lib/rate-limit.ts';
+import {ResolutionService} from '../lib/resolution-service.ts';
 function memory(){const data=new Map<string,string>();const files=new Set<string>();const storage:ArchiveStorage={read:async key=>data.get(key)||null,write:async(key,value)=>{data.set(key,value);},exists:async key=>files.has(key)};return {data,files,storage};}
 const source='https://www.instagram.com/p/DeNGui6BA5H/';
 const media={title:'Video',items:[{url:'https://example.com/video.mp4',kind:'video' as const,title:'Video'}]};
@@ -14,6 +15,16 @@ test('saved videos remain available after metadata expires and across instances'
 test('expired signed URLs without a stored file are not served as ready',async()=>{
  const m=memory();let now=0;const archive=new MediaArchive(m.storage,()=>now);await archive.save(source,media);now=120001;
  assert.equal(await archive.find(source),null);
+});
+test('saved-only lookup skips the origin and returns only files present in storage',async()=>{
+ const m=memory();const archive=new MediaArchive(m.storage);
+ const service=new ResolutionService(archive,async()=>{assert.fail('Saved-only lookup must not contact the origin');});
+ const saved=await archive.save(source,{...media,items:[...media.items,{url:'https://example.com/photo.jpg',kind:'image',title:'Photo'}]});
+ assert.equal(await service.resolveSaved(source),null);
+ m.files.add('files/'+saved.items[0].assetId);
+ const result=await service.resolveSaved('https://instagram.com/reel/DeNGui6BA5H/?utm_source=test');
+ assert.equal(result?.fromArchive,true);
+ assert.deepEqual(result?.items.map(item=>[item.kind,item.isStored]),[['video',true]]);
 });
 test('a saved Instagram cover does not permanently hide a missing video',async()=>{
  const m=memory();let now=0;const archive=new MediaArchive(m.storage,()=>now);

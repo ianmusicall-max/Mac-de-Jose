@@ -39,11 +39,15 @@ export class MediaArchive {
     await this.storage.write('results/'+await digest(sourceKey(source)),JSON.stringify({savedAt:this.now(),result:saved}));
     return saved;
   }
-  async find(source:string):Promise<ResolvedMedia|null> {
+  async find(source:string, storedOnly=false):Promise<ResolvedMedia|null> {
     const text=await this.storage.read('results/'+await digest(sourceKey(source)));if(!text)return null;
     const {savedAt,result}=JSON.parse(text) as {savedAt:number;result:ResolvedMedia};
     if(!Array.isArray(result.items))return null;
     const items=await Promise.all(result.items.map(async item=>({...item,isStored:!!item.assetId&&await this.storage.exists('files/'+item.assetId)})));
+    if(storedOnly){
+      const stored=items.filter(item=>item.isStored);
+      return stored.length?{...result,items:stored,fromArchive:true}:null;
+    }
     if(items.some(item=>item.isStored&&(item.kind!=='image'||!item.isPreview)))return {...result,items,fromArchive:true};
     return this.now()-savedAt<120000?result:null;
   }

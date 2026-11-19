@@ -96,6 +96,11 @@ export async function resolveInstagram(
   if (!shortcode) return extract(html,raw);
   const original = extractInstagram(html,shortcode);
   if (original.items.some(item=>item.kind==='video')) return original;
+  function limitedResult(error: OriginRateLimitError): ResolvedMedia {
+    if (!original.items.length) throw error;
+    const warning = 'Instagram limitó la búsqueda. Se muestran los archivos encontrados en la página pública. Puede haber más archivos en la publicación.';
+    return {...original, warning, albumWarning:warning, retryAfter:error.retryAfter};
+  }
   const query = publicInstagramQuery(html,shortcode);
   if (query && loadPublic) {
     try {
@@ -104,7 +109,7 @@ export async function resolveInstagram(
         return result;
       }
     } catch (error) {
-      if (error instanceof OriginRateLimitError) throw error;
+      if (error instanceof OriginRateLimitError) return limitedResult(error);
       // An empty/unsupported public query can still fall back to the embed.
     }
   }
@@ -115,7 +120,7 @@ export async function resolveInstagram(
     if (items.some(item=>item.kind==='video')) return {...original,items};
     return {...original,items,warning:'Instagram no ha entregado un vídeo descargable para esta publicación. La portada no es el vídeo. Puede requerir iniciar sesión, tener restricciones o ya no estar disponible; no podemos distinguir la causa desde esta web.'};
   } catch (error) {
-    if (error instanceof OriginRateLimitError) throw error;
+    if (error instanceof OriginRateLimitError) return limitedResult(error);
     return {...original,warning:'No pudimos obtener el vídeo desde la página pública de Instagram. Las imágenes encontradas no confirman que el vídeo esté disponible.'};
   }
 }

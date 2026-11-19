@@ -12,13 +12,15 @@ async function fetchOrigin(stage:'page'|'query'|'embed',url:string,init?:Request
 }
 async function resolve(url: string) {
   const post=instagramPost(url);
-  if(post){
-    const token=await instagramContext.read();
-    const query=token?publicInstagramQuery('',post,token):null;
-    if(query){
-      const response=await fetchOrigin('query',query.url,query.init);
+  const token=post?await instagramContext.read():null;
+  const cachedQuery=post&&token?publicInstagramQuery('',post,token):null;
+  if(post&&cachedQuery){
+    try {
+      const response=await fetchOrigin('query',cachedQuery.url,cachedQuery.init);
       const result=extractPublicInstagram(JSON.parse(await boundedText(response)),post);
       if(result?.items.length)return result;
+    } catch(error) {
+      if(error instanceof OriginRateLimitError)throw error;
     }
   }
   const response = await fetchOrigin('page',url);
@@ -40,6 +42,7 @@ async function resolve(url: string) {
     const embed = await fetchOrigin('embed',embedUrl);
     return boundedText(embed);
   }, async query => {
+    if(query.init.body===cachedQuery?.init.body)return null;
     const response = await fetchOrigin('query',query.url,query.init);
     const payload = await boundedText(response);
     return JSON.parse(payload) as unknown;
@@ -48,9 +51,15 @@ async function resolve(url: string) {
 const service = new ResolutionService(archive,resolve);
 export async function POST(request: Request) {
   try {
-    const payload = await request.json() as {url?: unknown;refresh?:boolean;kind?:string};
+    const payload = await request.json() as {url?: unknown;refresh?:boolean;kind?:string;savedOnly?:boolean};
     const url = publicUrl(String(payload.url));
     url.hash = '';
+    if(payload.savedOnly===true){
+      const result=await service.resolveSaved(url.href);
+      return result
+        ? Response.json(result,{headers:{'Cache-Control':'no-store'}})
+        : Response.json({error:'No hay archivos guardados para este enlace.'},{status:404,headers:{'Cache-Control':'no-store'}});
+    }
     return Response.json(await service.resolve(url.href,!!payload.refresh,payload.kind==='image'), {headers:{'Cache-Control':'no-store'}});
   } catch (e) {
     const limited = e instanceof OriginRateLimitError;
