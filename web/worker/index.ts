@@ -23,7 +23,17 @@ const worker = {
         },
       };
     }
-    return runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx));
+    return runWithConnectorBinding(binding, async () => {
+      const response = await handler.fetch(request, env, ctx);
+      if (request.method !== "GET" || new URL(request.url).pathname !== "/api/download") return response;
+
+      const length = Number(response.headers.get("Content-Length"));
+      if (!response.ok || !response.body || !Number.isSafeInteger(length) || length <= 0) return response;
+
+      // Vinext wraps route bodies. Apply the fixed length at the Worker boundary.
+      const body = response.body.pipeThrough(new FixedLengthStream(length));
+      return new Response(body, response);
+    });
   },
 };
 

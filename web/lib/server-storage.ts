@@ -18,4 +18,8 @@ export function storedHeaders(object:R2Object):Headers {
  const name=downloadName(object.customMetadata?.filename||'videovault',type);
  return new Headers({'Content-Type':type,'Content-Length':String(object.size),'Content-Disposition':`attachment; filename="${name}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});
 }
-export function storedResponse(object:R2ObjectBody):Response {return new Response(object.body,{headers:storedHeaders(object)});}
+export function storedResponse(object:R2ObjectBody):Response {
+ const headers=storedHeaders(object);
+ if(headers.get('Content-Type')?.startsWith('video/'))headers.set('Accept-Ranges','bytes');
+ return new Response(object.body,{headers});
+}

@@ -51,11 +51,22 @@ export async function GET(request:Request){
    return finish(new Response(data,{headers:{'Content-Type':type,'Content-Length':String(data.length),'Content-Disposition':`attachment; filename="${filename}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}}));
   }
   const length=Number(response.headers.get('content-length'));
-  if(!length||length>100*1024*1024)return finish(new Response(response.body,{headers:{'Content-Type':type,'Content-Disposition':`attachment; filename="${filename}"`,'Cache-Control':'no-store'}}));
+  if(!Number.isSafeInteger(length)||length<=0||length>100*1024*1024){
+   const headers=new Headers({'Content-Type':type,'Content-Disposition':`attachment; filename="${filename}"`,'Cache-Control':'no-store'});
+   if(Number.isSafeInteger(length)&&length>0&&!response.headers.get('content-encoding'))headers.set('Content-Length',String(length));
+   return finish(new Response(response.body,{headers}));
+  }
   await bucket().put('files/'+assetId,response.body,{httpMetadata:{contentType:type},customMetadata:{filename}});
   const object=await bucket().get('files/'+assetId);
   if(!object)throw new Error('No se pudo guardar la descarga.');
   if(object.size!==length){await bucket().delete('files/'+assetId);throw new IncompleteImageError('El archivo llegó incompleto. Vuelve a intentarlo.');}
-  return storedResponse(object);
+  const range=request.headers.get('range');
+  if(range&&type.startsWith('video/')){
+   await object.body.cancel();
+   const partial=await cachedFile(assetId,range,inline);
+   if(!partial)throw new Error('No se pudo abrir la descarga guardada.');
+   return finish(partial);
+  }
+  return finish(storedResponse(object));
  }catch(error){return new Response(error instanceof Error?error.message:'No se pudo descargar.',{status:error instanceof OriginRateLimitError?429:error instanceof IncompleteImageError?502:400,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store',...(error instanceof OriginRateLimitError?{'Retry-After':String(error.retryAfter)}:{})}});}
 }
