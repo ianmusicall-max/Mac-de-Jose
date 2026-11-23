@@ -285,6 +285,7 @@ export function Downloader({
                 key={`${item.albumIndex || 0}:${item.kind}:${item.url}`}
                 item={item}
                 position={index + 1}
+                offerAudio={Boolean(platform)}
                 poster={items.find(
                   candidate =>
                     candidate.kind === 'image' &&

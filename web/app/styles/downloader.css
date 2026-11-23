@@ -345,9 +345,14 @@ button:disabled {
 
 .video-download-actions {
   display: flex;
+  align-items: flex-start;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.video-download-actions .audio-action {
+  max-width: 100%;
 }
 
 .video-download-actions .download {

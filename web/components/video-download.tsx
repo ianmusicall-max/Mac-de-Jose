@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ArrowDownToLine, Share } from 'lucide-react';
 import { downloadName } from '@/lib/download-name';
 
-export function VideoDownload({ href }: { href: string }) {
+export function VideoDownload({ href, children }: { href: string; children?: ReactNode }) {
   const [file, setFile] = useState<File>();
   const [busy, setBusy] = useState(false);
   const [fallback, setFallback] = useState(false);
@@ -57,6 +57,7 @@ export function VideoDownload({ href }: { href: string }) {
         <button className="download" type="button" disabled={busy} onClick={saveToPhotos}>
           <Share size={17} /> {busy && !file ? 'Preparando vídeo…' : file ? 'Compartir vídeo' : 'Guardar en Fotos'}
         </button>
+        {children}
       </div>
       <div aria-live="polite">
         {fallback ? (

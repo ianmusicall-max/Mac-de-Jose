@@ -26,10 +26,12 @@ export function ResultCard({
   item,
   poster,
   position,
+  offerAudio,
 }: {
   item: Media;
   poster?: Media;
   position: number;
+  offerAudio?: boolean;
 }) {
   const Icon = KIND_ICON[item.kind];
   const dimensions = item.width && item.height ? ` · ${item.width}×${item.height}` : '';
@@ -59,7 +61,9 @@ export function ResultCard({
       ) : item.kind === 'image' ? (
         <ImageDownloadButton item={item} />
       ) : item.kind === 'video' ? (
-        <VideoDownload key={downloadHref(item)} href={downloadHref(item)} />
+        <VideoDownload key={downloadHref(item)} href={downloadHref(item)}>
+          {offerAudio && <AudioDownloadButton item={item} />}
+        </VideoDownload>
       ) : (
         <a className="download" href={downloadHref(item)}>
           <ArrowDownToLine size={17} /> Descargar {KIND_LABEL[item.kind]}
