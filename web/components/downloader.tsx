@@ -102,15 +102,14 @@ export function Downloader({
 
   async function detect(event: FormEvent, refresh = false) {
     event.preventDefault();
-    if (busy || (refresh && waiting > 0)) return;
+    if (busy) return;
     const link = url.trim();
-    const savedOnly = waiting > 0;
 
     setBusy(true);
     setError('');
     let sameSource = false;
     try { sameSource = sourceKey(link) === resultSource; } catch { /* Invalid input is handled by the API. */ }
-    if (!sameSource || savedOnly) {
+    if (!sameSource) {
       setItems([]);
       setTitle('');
       setSearched(false);
@@ -123,7 +122,7 @@ export function Downloader({
       const response = await fetch('/api/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: link, refresh, kind: selected, savedOnly }),
+        body: JSON.stringify({ url: link, refresh, kind: selected }),
       });
       const data = (await response.json()) as ResolveResponse;
 
@@ -178,9 +177,7 @@ export function Downloader({
             disabled={busy}
           />
           <button disabled={busy} type="submit">
-            {waiting > 0 ? (
-              'Buscar guardado'
-            ) : busy ? (
+            {busy ? (
               <>
                 <LoaderCircle className="spin" size={18} /> Buscando…
               </>
@@ -229,7 +226,7 @@ export function Downloader({
 
       {selected === 'image' && searched && (
         <div className="image-toolbar">
-          <button type="button" className="text-button" disabled={busy || waiting > 0} onClick={event => detect(event, true)}>
+          <button type="button" className="text-button" disabled={busy} onClick={event => detect(event, true)}>
             Actualizar álbum
           </button>
           {visible.length > 1 && <AlbumDownloadButton items={visible} />}

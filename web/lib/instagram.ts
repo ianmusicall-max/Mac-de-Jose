@@ -91,17 +91,18 @@ export async function resolveInstagram(
   html: string,
   loadHtml: (url:string)=>Promise<string>,
   loadPublic?: (query:PublicInstagramQuery)=>Promise<unknown>,
+  cachedToken?: string | null,
 ): Promise<ResolvedMedia> {
   const shortcode = instagramPost(raw);
   if (!shortcode) return extract(html,raw);
   const original = extractInstagram(html,shortcode);
-  if (original.items.some(item=>item.kind==='video')) return original;
   function limitedResult(error: OriginRateLimitError): ResolvedMedia {
     if (!original.items.length) throw error;
     const warning = 'Instagram limitó la búsqueda. Se muestran los archivos encontrados en la página pública. Puede haber más archivos en la publicación.';
     return {...original, warning, albumWarning:warning, retryAfter:error.retryAfter};
   }
-  const query = publicInstagramQuery(html,shortcode);
+  const query = publicInstagramQuery(html,shortcode) ||
+    (cachedToken ? publicInstagramQuery('',shortcode,cachedToken) : null);
   if (query && loadPublic) {
     try {
       const result = extractPublicInstagram(await loadPublic(query),shortcode);
@@ -114,6 +115,7 @@ export async function resolveInstagram(
     }
   }
 
+  if (original.items.some(item=>item.kind==='video')) return original;
   try {
     const embed = extractInstagram(await loadHtml(`https://www.instagram.com/p/${shortcode}/embed/captioned/`),shortcode);
     const items = [...original.items,...embed.items.filter(item=>!original.items.some(other=>other.url===item.url))];

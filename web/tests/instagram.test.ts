@@ -56,6 +56,17 @@ test('keeps a public photo when the embed responds with a rate limit',async()=>{
  assert.ok(result.albumWarning);
 });
 
+test('keeps the public photo when an anonymous query with a cached token is rate limited',async()=>{
+ const post='https://www.instagram.com/p/DSd39W1jCZ1/';
+ const html='<script>{"display_url":"https://example.com/photo.jpg"}</script>';
+ const result=await resolveInstagram(post,html,async()=>assert.fail('The rate limit stops the embed request'),async query=>{
+   assert.equal(new Headers(query.init.headers).get('X-FB-LSD'),'cached-anonymous-token');
+   throw new OriginRateLimitError(60);
+ },'cached-anonymous-token');
+ assert.equal(result.retryAfter,60);
+ assert.deepEqual(result.items.map(item=>item.url),['https://example.com/photo.jpg']);
+});
+
 function publicPhotos(nodes:unknown[],count=nodes.length){return {data:{xig_polaris_media:{if_not_gated_logged_out:{carousel_media:nodes,carousel_media_count:count}}}};}
 const photo=(i:number)=>({pk:String(i),media_type:1,original_width:1080,original_height:1350,image_versions2:{candidates:[{url:`https://example.com/crop-${i}.jpg`,width:1440,height:1440},{url:`https://example.com/full-${i}.jpg`,width:1080,height:1350}]}});
 test('photo-only albums are returned completely without falling back to the cover',async()=>{

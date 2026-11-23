@@ -29,21 +29,21 @@ export class ResolutionService {
       const saved=await this.archive.find(key);
       const needsImages=images&&saved&&key.startsWith('https://www.instagram.com/p/')&&
         (!saved.items.some(item=>item.kind==='image')||saved.albumSize===undefined);
-      if(!refresh&&!needsImages&&saved)return saved;
+      if(!refresh&&!needsImages&&saved?.items.length)return saved;
       if(refresh||needsImages)this.cache.invalidate(key);
       try {
         const result=await this.cache.get(key,async()=>{
           const loaded=await this.load(key);
           if(loaded.retryAfter){
-            if(saved)throw new OriginRateLimitError(loaded.retryAfter);
+            if(saved?.items.length)throw new OriginRateLimitError(loaded.retryAfter);
             return loaded;
           }
-          return this.archive.save(key,loaded);
+          return loaded.items.length ? this.archive.save(key,loaded) : loaded;
         });
-        if(result.retryAfter)this.cache.invalidate(key);
+        if(result.retryAfter||!result.items.length)this.cache.invalidate(key);
         return result;
       } catch(error) {
-        if(saved&&error instanceof OriginRateLimitError)return {
+        if(saved?.items.length&&error instanceof OriginRateLimitError)return {
           ...saved,
           warning:`Instagram está limitando las consultas. Conservamos los resultados disponibles. Podrás intentar actualizar en ${error.retryAfter} segundos; la disponibilidad depende del origen.`,
           albumWarning:'No se pudo actualizar. Se conserva la lista conocida del álbum.',

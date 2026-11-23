@@ -48,6 +48,19 @@ test('failed loads do not leave a stuck pending request',async()=>{
   await assert.rejects(()=>service.resolve(post),OriginRateLimitError);
   assert.deepEqual(await service.resolve(post),media);assert.equal(calls,2);
 });
+test('an empty archived or live result does not mask photos on the next search',async()=>{
+  const empty:ResolvedMedia={title:'Test',items:[]};
+  const photo:ResolvedMedia={title:'Test',items:[{url:'https://example.com/photo.jpg',kind:'image',title:'Test'}]};
+  const saves:ResolvedMedia[]=[];
+  let calls=0;
+  const service=new ResolutionService({
+    find:async()=>empty,
+    save:async(_url,result)=>{saves.push(result);return result;},
+  },async()=>++calls===1?empty:photo);
+  assert.deepEqual(await service.resolve(post),empty);
+  assert.deepEqual(await service.resolve(post,false,true),photo);
+  assert.deepEqual(saves,[photo]);
+});
 test('cooldowns survive reloads, expire and apply to canonical Instagram aliases',()=>{
   assert.equal(cooldownOrigin('https://instagram.com/reel/Db3HH6AjaSn/'),cooldownOrigin(post));
   assert.deepEqual(readCooldown('{"origin":"https://www.instagram.com","until":2000}',1000),{origin:'https://www.instagram.com',until:2000});

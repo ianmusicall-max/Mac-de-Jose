@@ -1,6 +1,6 @@
 import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
-import { resolveInstagram, instagramPost, publicInstagramQuery, extractPublicInstagram } from '@/lib/instagram';
+import { resolveInstagram, instagramPost } from '@/lib/instagram';
 import { ResolutionService } from '@/lib/resolution-service';
 import {archive,sharedBackoff,instagramContext} from '@/lib/server-storage';
 async function fetchOrigin(stage:'page'|'query'|'embed',url:string,init?:RequestInit) {
@@ -13,16 +13,6 @@ async function fetchOrigin(stage:'page'|'query'|'embed',url:string,init?:Request
 async function resolve(url: string) {
   const post=instagramPost(url);
   const token=post?await instagramContext.read():null;
-  const cachedQuery=post&&token?publicInstagramQuery('',post,token):null;
-  if(post&&cachedQuery){
-    try {
-      const response=await fetchOrigin('query',cachedQuery.url,cachedQuery.init);
-      const result=extractPublicInstagram(JSON.parse(await boundedText(response)),post);
-      if(result?.items.length)return result;
-    } catch(error) {
-      if(error instanceof OriginRateLimitError)throw error;
-    }
-  }
   const response = await fetchOrigin('page',url);
   const type = response.headers.get('content-type') || '';
   const k = kind(type);
@@ -38,15 +28,14 @@ async function resolve(url: string) {
   }
   const html = await boundedText(response);
   if(post)await instagramContext.record(html);
-  return resolveInstagram(response.url || url, html, async embedUrl => {
+  return resolveInstagram(post ? url : response.url || url, html, async embedUrl => {
     const embed = await fetchOrigin('embed',embedUrl);
     return boundedText(embed);
   }, async query => {
-    if(query.init.body===cachedQuery?.init.body)return null;
     const response = await fetchOrigin('query',query.url,query.init);
     const payload = await boundedText(response);
     return JSON.parse(payload) as unknown;
-  });
+  }, token);
 }
 const service = new ResolutionService(archive,resolve);
 export async function POST(request: Request) {
