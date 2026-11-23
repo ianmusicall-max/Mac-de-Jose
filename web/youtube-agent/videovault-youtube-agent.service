@@ -1,0 +1,24 @@
+[Unit]
+Description=VideoVault YouTube download agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=videovault-browser
+Group=videovault-browser
+Environment=HOME=/var/lib/videovault-browser
+Environment=VIDEOVAULT_FIREFOX_PROFILE=/var/lib/videovault-browser/profile
+EnvironmentFile=/etc/videovault/youtube-agent.env
+ExecStart=/usr/bin/python3 /opt/videovault/youtube-agent/agent.py
+Restart=on-failure
+RestartSec=15
+UMask=0077
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/videovault-browser
+
+[Install]
+WantedBy=multi-user.target

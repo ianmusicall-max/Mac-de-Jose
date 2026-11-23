@@ -1,3 +1,5 @@
+import { env } from 'cloudflare:workers';
+import { resolveYoutubeJob } from '@/lib/youtube-jobs';
 import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
 import { resolveInstagram, instagramPost } from '@/lib/instagram';
@@ -73,6 +75,9 @@ export async function POST(request: Request) {
       throw new Error('Pega un enlace de un vídeo o Short de YouTube.');
     }
     if (youtube) url = new URL(`https://www.youtube.com/watch?v=${youtube}`);
+    if (youtube && env.YOUTUBE_AGENT_TOKEN && payload.kind !== 'image') {
+      return await resolveYoutubeJob(youtube, url.href, payload.savedOnly === true);
+    }
     if(payload.savedOnly===true){
       const result=await service.resolveSaved(url.href);
       return result

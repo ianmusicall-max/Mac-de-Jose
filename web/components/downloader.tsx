@@ -20,6 +20,7 @@ type ResolveResponse = {
   items: Media[];
   title: string;
   retryAfter?: number;
+  pending?: boolean;
   warning?: string;
   fromArchive?: boolean;
   albumWarning?: string;
@@ -121,12 +122,20 @@ export function Downloader({
     }
 
     try {
-      const response = await fetch('/api/resolve', {
+      const request = () => fetch('/api/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: link, refresh, kind: selected, platform }),
       });
-      const data = (await response.json()) as ResolveResponse;
+      const deadline = Date.now() + 120_000;
+      let response = await request();
+      let data = (await response.json()) as ResolveResponse;
+      while (response.status === 202 && data.pending && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 4000));
+        response = await request();
+        data = (await response.json()) as ResolveResponse;
+      }
+      if (data.pending) throw new Error('El vídeo sigue en preparación. Vuelve a consultarlo en unos segundos.');
 
       if (data.retryAfter || response.status === 429) {
         const current = Date.now();
