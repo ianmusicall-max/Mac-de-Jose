@@ -15,6 +15,7 @@ export type Tool = {
   nav: string;
   /** Which format the downloader starts on. */
   kind: Media['kind'];
+  platform?: 'tiktok';
   /** <title> and meta description. */
   title: string;
   description: string;
@@ -91,6 +92,37 @@ export const HUB: Tool = {
 };
 
 export const TOOLS: Tool[] = [
+  {
+    path: '/tiktok',
+    nav: 'TikTok',
+    kind: 'video',
+    platform: 'tiktok',
+    title: 'Descargar vídeos de TikTok en MP4 · VideoVault',
+    description: 'Pega el enlace de un vídeo público de TikTok y descárgalo en MP4 desde tu navegador.',
+    heading: 'Descargar vídeos',
+    headingAccent: 'de TikTok en MP4',
+    intro: 'Pega el enlace de un vídeo público de TikTok para verlo y guardarlo en MP4.',
+    placeholder: 'https://www.tiktok.com/@usuario/video/…',
+    steps: [
+      { heading: 'Copia el enlace', body: 'En TikTok, toca «Compartir» y luego «Copiar enlace».' },
+      { heading: 'Busca el vídeo', body: 'Pega el enlace completo o el enlace corto que te dio TikTok.' },
+      { heading: 'Descarga el MP4', body: 'Cuando aparezca el vídeo, pulsa «Descargar» para guardarlo.' },
+    ],
+    faq: [
+      {
+        question: '¿Qué calidad tiene el vídeo?',
+        answer: 'La calidad depende de las versiones que TikTok entregue para ese enlace. Guardamos el MP4 tal como lo recibimos.',
+      },
+      {
+        question: '¿El vídeo conserva la marca de agua?',
+        answer: 'Depende del archivo disponible. Si el vídeo que entrega TikTok lleva una marca de agua, se conserva.',
+      },
+      {
+        question: '¿Qué enlaces funcionan?',
+        answer: 'Puedes pegar la dirección completa o un enlace corto de un vídeo público. Si TikTok pide iniciar sesión, el vídeo no estará disponible aquí.',
+      },
+    ],
+  },
   {
     path: '/reel',
     nav: 'Reels',

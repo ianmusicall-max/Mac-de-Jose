@@ -19,7 +19,7 @@ export function ToolPage({ tool }: { tool: Tool }) {
       <main className="page">
         <section className="hero">
           <span className="eyebrow">
-            <span /> DESCARGADOR DE INSTAGRAM
+            <span /> DESCARGADOR DE {tool.platform === 'tiktok' ? 'TIKTOK' : 'INSTAGRAM'}
           </span>
           <h1>
             {tool.heading}
@@ -29,10 +29,10 @@ export function ToolPage({ tool }: { tool: Tool }) {
           <p className="hero-intro">{tool.intro}</p>
         </section>
 
-        <Downloader defaultKind={tool.kind} placeholder={tool.placeholder} />
+        <Downloader defaultKind={tool.kind} placeholder={tool.placeholder} platform={tool.platform} />
 
         <HowItWorks steps={tool.steps} />
-        <Benefits />
+        {tool.platform !== 'tiktok' && <Benefits />}
         <ToolLinks current={tool.path} />
         <Faq items={tool.faq} />
       </main>

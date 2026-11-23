@@ -38,9 +38,11 @@ function readHistory(): string[] {
 export function Downloader({
   defaultKind = 'video',
   placeholder,
+  platform,
 }: {
   defaultKind?: Media['kind'];
   placeholder: string;
+  platform?: 'tiktok';
 }) {
   const [url, setUrl] = useState('');
   const [selected, setSelected] = useState<Media['kind']>(defaultKind);
@@ -122,7 +124,7 @@ export function Downloader({
       const response = await fetch('/api/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: link, refresh, kind: selected }),
+        body: JSON.stringify({ url: link, refresh, kind: selected, platform }),
       });
       const data = (await response.json()) as ResolveResponse;
 
@@ -189,39 +191,43 @@ export function Downloader({
           </button>
         </div>
 
-        <fieldset className="formats format-options">
-          <legend>Formato de descarga</legend>
-          {KINDS.map(option => {
-            const Icon = KIND_ICON[option];
-            return (
-              <label
-                key={option}
-                className={selected === option ? 'format-choice selected' : 'format-choice'}
-              >
-                <input
-                  type="radio"
-                  name="format"
-                  value={option}
-                  checked={selected === option}
-                  onChange={() => setSelected(option)}
-                />
-                <Icon size={15} />
-                {KIND_TITLE[option].slice(0, -1)}
-                {searched && (
-                  <span className="format-count">
-                    {options.filter(item => item.kind === option).length}
-                  </span>
-                )}
-              </label>
-            );
-          })}
-        </fieldset>
+        {!platform && (
+          <fieldset className="formats format-options">
+            <legend>Formato de descarga</legend>
+            {KINDS.map(option => {
+              const Icon = KIND_ICON[option];
+              return (
+                <label
+                  key={option}
+                  className={selected === option ? 'format-choice selected' : 'format-choice'}
+                >
+                  <input
+                    type="radio"
+                    name="format"
+                    value={option}
+                    checked={selected === option}
+                    onChange={() => setSelected(option)}
+                  />
+                  <Icon size={15} />
+                  {KIND_TITLE[option].slice(0, -1)}
+                  {searched && (
+                    <span className="format-count">
+                      {options.filter(item => item.kind === option).length}
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+          </fieldset>
+        )}
 
-        <small className="format-help">
-          {waiting > 0
-            ? `El origen está en espera (${waiting}s). Los archivos guardados siguen disponibles.`
-            : 'Cambiar de formato muestra los resultados de la misma búsqueda.'}
-        </small>
+        {(!platform || waiting > 0) && (
+          <small className="format-help">
+            {waiting > 0
+              ? `El origen está en espera (${waiting}s). Los archivos guardados siguen disponibles.`
+              : 'Cambiar de formato muestra los resultados de la misma búsqueda.'}
+          </small>
+        )}
       </form>
 
       {selected === 'image' && searched && (
@@ -241,8 +247,7 @@ export function Downloader({
         )}
         {fromArchive && (
           <p className="notice" role="status">
-            Se recuperó el álbum guardado. Las descargas ya conservadas están disponibles sin
-            consultar el origen.
+            Se recuperaron los archivos guardados sin consultar el origen.
           </p>
         )}
         {selected === 'image' && albumWarning && (
