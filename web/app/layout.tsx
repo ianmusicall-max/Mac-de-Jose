@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-import { HUB } from '@/lib/tools';
+const title = 'VideoVault · Instagram, TikTok y YouTube';
+const description = 'Elige Instagram, TikTok o YouTube para descargar vídeos, audio o fotos con VideoVault.';
 
 export const metadata: Metadata = {
-  title: { default: HUB.title, template: '%s' },
-  description: HUB.description,
+  title: { default: title, template: '%s' },
+  description,
   applicationName: 'VideoVault',
   icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
   openGraph: {
     type: 'website',
     siteName: 'VideoVault',
-    title: HUB.title,
-    description: HUB.description,
+    title,
+    description,
     locale: 'es_ES',
   },
 };

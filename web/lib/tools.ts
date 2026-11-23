@@ -68,9 +68,9 @@ const COMMON_FAQ = [
   },
 ];
 
-export const HUB: Tool = {
-  path: '/',
-  nav: 'Inicio',
+const INSTAGRAM: Tool = {
+  path: '/instagram',
+  nav: 'Instagram',
   kind: 'video',
   title: 'VideoVault · Descargar vídeo, audio y fotos de Instagram',
   description:
@@ -92,6 +92,7 @@ export const HUB: Tool = {
 };
 
 export const TOOLS: Tool[] = [
+  INSTAGRAM,
   {
     path: '/tiktok',
     nav: 'TikTok',
@@ -279,10 +280,8 @@ export const TOOLS: Tool[] = [
   },
 ];
 
-export const ALL_TOOLS: Tool[] = [HUB, ...TOOLS];
-
 export function toolByPath(path: string): Tool | undefined {
-  return ALL_TOOLS.find(tool => tool.path === path);
+  return TOOLS.find(tool => tool.path === path);
 }
 
 /** The other tools, for the cross-link section at the foot of each page. */
