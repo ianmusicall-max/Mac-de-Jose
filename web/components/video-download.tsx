@@ -1,19 +1,10 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useState } from 'react';
 import { ArrowDownToLine, Share } from 'lucide-react';
 import { downloadName } from '@/lib/download-name';
 
-const subscribe = () => () => {};
-const serverSnapshot = () => false;
-
-function isAppleMobile() {
-  return /iPhone|iPad|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
 export function VideoDownload({ href }: { href: string }) {
-  const showPhotos = useSyncExternalStore(subscribe, isAppleMobile, serverSnapshot);
   const [file, setFile] = useState<File>();
   const [busy, setBusy] = useState(false);
   const [fallback, setFallback] = useState(false);
@@ -63,11 +54,9 @@ export function VideoDownload({ href }: { href: string }) {
         <a className="download" href={href}>
           <ArrowDownToLine size={17} /> Descargar vídeo
         </a>
-        {showPhotos && (
-          <button className="download" type="button" disabled={busy} onClick={saveToPhotos}>
-            <Share size={17} /> {busy && !file ? 'Preparando vídeo…' : file ? 'Compartir vídeo' : 'Guardar en Fotos'}
-          </button>
-        )}
+        <button className="download" type="button" disabled={busy} onClick={saveToPhotos}>
+          <Share size={17} /> {busy && !file ? 'Preparando vídeo…' : file ? 'Compartir vídeo' : 'Guardar en Fotos'}
+        </button>
       </div>
       <div aria-live="polite">
         {fallback ? (
