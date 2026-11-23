@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { TOOLS } from '@/lib/tools';
 
 export function SiteFooter() {
@@ -8,9 +7,13 @@ export function SiteFooter() {
         <div>
           <h2>Herramientas</h2>
           <ul>
+            <li>
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Keep site navigation independent of client routing. */}
+              <a href="/">Inicio</a>
+            </li>
             {TOOLS.map(tool => (
               <li key={tool.path}>
-                <Link href={tool.path}>{tool.nav}</Link>
+                <a href={tool.path}>{tool.nav}</a>
               </li>
             ))}
           </ul>
@@ -20,10 +23,10 @@ export function SiteFooter() {
           <h2>Legal</h2>
           <ul>
             <li>
-              <Link href="/privacidad">Privacidad</Link>
+              <a href="/privacidad">Privacidad</a>
             </li>
             <li>
-              <Link href="/terminos">Términos de uso</Link>
+              <a href="/terminos">Términos de uso</a>
             </li>
           </ul>
         </div>
