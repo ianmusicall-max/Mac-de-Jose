@@ -15,7 +15,7 @@ export type Tool = {
   nav: string;
   /** Which format the downloader starts on. */
   kind: Media['kind'];
-  platform?: 'tiktok';
+  platform?: 'tiktok' | 'youtube';
   /** <title> and meta description. */
   title: string;
   description: string;
@@ -121,6 +121,26 @@ export const TOOLS: Tool[] = [
         question: '¿Qué enlaces funcionan?',
         answer: 'Puedes pegar la dirección completa o un enlace corto de un vídeo público. Si TikTok pide iniciar sesión, el vídeo no estará disponible aquí.',
       },
+    ],
+  },
+  {
+    path: '/youtube',
+    nav: 'YouTube',
+    kind: 'video',
+    platform: 'youtube',
+    title: 'Descargar vídeos de YouTube en MP4 · VideoVault',
+    description: 'Comprueba si un vídeo público de YouTube está disponible como archivo MP4 directo.',
+    heading: 'Descargar vídeos',
+    headingAccent: 'de YouTube en MP4',
+    intro: 'Pega un enlace de YouTube para buscar un archivo MP4 disponible.',
+    placeholder: 'https://www.youtube.com/watch?v=…',
+    steps: [
+      { heading: 'Copia el enlace', body: 'Copia la dirección de un vídeo o Short de YouTube.' },
+      { heading: 'Busca el vídeo', body: 'Pega el enlace y comprueba si YouTube ofrece un MP4 directo.' },
+      { heading: 'Guarda el MP4', body: 'Si aparece el vídeo, pulsa «Descargar vídeo» o «Guardar en Fotos» en iPhone.' },
+    ],
+    faq: [
+      { question: '¿Por qué algunos vídeos no se pueden descargar aquí?', answer: 'La herramienta necesita que YouTube entregue un MP4 directo y accesible. Si el vídeo es tuyo, puedes exportarlo desde YouTube Studio.' },
     ],
   },
   {

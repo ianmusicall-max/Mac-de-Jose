@@ -2,6 +2,7 @@ import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
 import { resolveInstagram, instagramPost } from '@/lib/instagram';
 import { isTikTok, resolveTikTok, tikTokVideoId } from '@/lib/tiktok';
+import { resolveYouTube, youtubeVideoId } from '@/lib/youtube';
 import { ResolutionService } from '@/lib/resolution-service';
 import {archive,sharedBackoff,instagramContext} from '@/lib/server-storage';
 async function fetchOrigin(stage:'page'|'query'|'embed'|'video',url:string,init?:RequestInit) {
@@ -14,6 +15,7 @@ async function fetchOrigin(stage:'page'|'query'|'embed'|'video',url:string,init?
 async function resolve(url: string) {
   const source = new URL(url);
   const tikTok = isTikTok(source);
+  const youtube = youtubeVideoId(source);
   const post=instagramPost(url);
   const token=post?await instagramContext.read():null;
   const response = await fetchOrigin('page',url);
@@ -25,6 +27,14 @@ async function resolve(url: string) {
       throw new Error('Usa el enlace de una publicación pública de vídeo de TikTok.');
     }
     return resolveTikTok(page, await boundedText(response), candidate =>
+      fetchOrigin('video', candidate, {headers:{Range:'bytes=0-0'}}));
+  }
+  if (youtube) {
+    if (!type.includes('text/html')) {
+      await response.body?.cancel();
+      throw new Error('YouTube no ofreció un vídeo público descargable para este enlace.');
+    }
+    return resolveYouTube(youtube, await boundedText(response), candidate =>
       fetchOrigin('video', candidate, {headers:{Range:'bytes=0-0'}}));
   }
   const k = kind(type);
@@ -53,11 +63,16 @@ const service = new ResolutionService(archive,resolve);
 export async function POST(request: Request) {
   try {
     const payload = await request.json() as {url?: unknown;refresh?:boolean;kind?:string;savedOnly?:boolean;platform?:string};
-    const url = publicUrl(String(payload.url));
+    let url = publicUrl(String(payload.url));
     url.hash = '';
     if (payload.platform === 'tiktok' && !isTikTok(url)) {
       throw new Error('Pega un enlace de vídeo de TikTok.');
     }
+    const youtube = youtubeVideoId(url);
+    if (payload.platform === 'youtube' && !youtube) {
+      throw new Error('Pega un enlace de un vídeo o Short de YouTube.');
+    }
+    if (youtube) url = new URL(`https://www.youtube.com/watch?v=${youtube}`);
     if(payload.savedOnly===true){
       const result=await service.resolveSaved(url.href);
       return result

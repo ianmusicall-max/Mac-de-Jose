@@ -19,7 +19,7 @@ export function ToolPage({ tool }: { tool: Tool }) {
       <main className="page">
         <section className="hero">
           <span className="eyebrow">
-            <span /> DESCARGADOR DE {tool.platform === 'tiktok' ? 'TIKTOK' : 'INSTAGRAM'}
+            <span /> DESCARGADOR DE {tool.platform?.toUpperCase() ?? 'INSTAGRAM'}
           </span>
           <h1>
             {tool.heading}
@@ -32,7 +32,13 @@ export function ToolPage({ tool }: { tool: Tool }) {
         <Downloader defaultKind={tool.kind} placeholder={tool.placeholder} platform={tool.platform} />
 
         <HowItWorks steps={tool.steps} />
-        {tool.platform !== 'tiktok' && <Benefits />}
+        {!tool.platform && <Benefits />}
+        {tool.platform === 'youtube' && (
+          <p className="hero-intro">
+            Si el vídeo es tuyo, también puedes descargarlo desde{' '}
+            <a className="text-button" href="https://studio.youtube.com/">YouTube Studio</a>.
+          </p>
+        )}
         <ToolLinks current={tool.path} />
         <Faq items={tool.faq} />
       </main>

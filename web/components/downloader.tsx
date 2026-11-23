@@ -42,7 +42,7 @@ export function Downloader({
 }: {
   defaultKind?: Media['kind'];
   placeholder: string;
-  platform?: 'tiktok';
+  platform?: 'tiktok' | 'youtube';
 }) {
   const [url, setUrl] = useState('');
   const [selected, setSelected] = useState<Media['kind']>(defaultKind);
