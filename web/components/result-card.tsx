@@ -3,6 +3,7 @@ import { ArrowDownToLine, Film, ImageIcon, Music2 } from 'lucide-react';
 import type { Media } from '@/lib/media';
 import { AudioDownloadButton } from '@/components/audio-download';
 import { ImageDownloadButton, ImagePreview } from '@/components/image-download';
+import { VideoDownload } from '@/components/video-download';
 import { VideoPreview } from '@/components/video-preview';
 
 const KIND_LABEL = { video: 'vídeo', audio: 'audio', image: 'imagen' } as const;
@@ -57,6 +58,8 @@ export function ResultCard({
         <AudioDownloadButton item={item} />
       ) : item.kind === 'image' ? (
         <ImageDownloadButton item={item} />
+      ) : item.kind === 'video' ? (
+        <VideoDownload key={downloadHref(item)} href={downloadHref(item)} />
       ) : (
         <a className="download" href={downloadHref(item)}>
           <ArrowDownToLine size={17} /> Descargar {KIND_LABEL[item.kind]}

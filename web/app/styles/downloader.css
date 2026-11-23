@@ -338,9 +338,24 @@ button:disabled {
   border-radius: 8px;
 }
 
-.result-video > .download {
+.video-download {
   grid-column: 1 / -1;
-  justify-self: end;
+  text-align: end;
+}
+
+.video-download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.video-download-actions .download {
+  margin-left: 0;
+}
+
+.video-download-actions button:disabled {
+  opacity: 0.65;
 }
 
 @media (max-width: 860px) {
