@@ -2,6 +2,8 @@ import { publicUrl } from './media.ts';
 import { OriginRateLimitError } from './rate-limit.ts';
 import type { ResolvedMedia } from './instagram.ts';
 
+export const TIKTOK_MP4_UNAVAILABLE = 'TikTok no ofreció un archivo MP4 descargable para este vídeo.';
+
 export function isTikTok(url: URL): boolean {
   return ['tiktok.com', 'www.tiktok.com', 'm.tiktok.com', 'vm.tiktok.com', 'vt.tiktok.com'].includes(url.hostname);
 }
@@ -81,7 +83,7 @@ export async function resolveTikTok(
   ]);
   const title = typeof item.desc === 'string' && item.desc.trim() ? item.desc.trim() : `TikTok ${id}`;
   if (candidates.size === 0) {
-    throw new Error('TikTok no ofreció un archivo MP4 descargable para este vídeo.');
+    throw new Error(TIKTOK_MP4_UNAVAILABLE);
   }
 
   for (const candidate of [...candidates].slice(0, 8)) {
@@ -102,5 +104,5 @@ export async function resolveTikTok(
     }
   }
 
-  throw new Error('TikTok no ofreció un archivo MP4 descargable para este vídeo.');
+  throw new Error(TIKTOK_MP4_UNAVAILABLE);
 }

@@ -2,7 +2,8 @@
 import type { Tool } from '@/lib/tools';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowUpRight, Film, ImageIcon, Link2, LoaderCircle, Music2, Clock3 } from 'lucide-react';
-import type { Media } from '@/lib/media';
+import { publicUrl, type Media } from '@/lib/media';
+import { isTikTok, TIKTOK_MP4_UNAVAILABLE } from '@/lib/tiktok';
 import { mediaOptions, selectionMessage } from '@/lib/media-selection';
 import { AlbumDownloadButton } from '@/components/image-download';
 import { ResultCard } from '@/components/result-card';
@@ -57,6 +58,7 @@ export function Downloader({
   const [busy, setBusy] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
+  const [tiktokFallback, setTikTokFallback] = useState('');
   const [items, setItems] = useState<Media[]>([]);
   const [title, setTitle] = useState('');
   const [sourceWarning, setSourceWarning] = useState('');
@@ -117,6 +119,7 @@ export function Downloader({
 
     setBusy(true);
     setError('');
+    setTikTokFallback('');
     let sameSource = false;
     try { sameSource = sourceKey(link) === resultSource; } catch { /* Invalid input is handled by the API. */ }
     if (!sameSource) {
@@ -152,7 +155,14 @@ export function Downloader({
         try { localStorage.setItem('snapreel-cooldown', JSON.stringify(nextCooldown)); }
         catch { /* The in-memory wait remains available. */ }
       }
-      if (!response.ok) throw new Error(data.error || t.parseError);
+      if (!response.ok) {
+        if (platform === 'tiktok' && data.error === TIKTOK_MP4_UNAVAILABLE) {
+          const source = publicUrl(link);
+          if (isTikTok(source)) setTikTokFallback(source.href);
+          throw new Error(t.tikTokUnavailable);
+        }
+        throw new Error(data.error || t.parseError);
+      }
       setResultSource(sourceKey(link));
 
       setItems(data.items);
@@ -257,6 +267,11 @@ export function Downloader({
         {error && (
           <p className="error" role="alert">
             {error}
+            {tiktokFallback && (
+              <a className="tiktok-fallback" href={tiktokFallback} target="_blank" rel="noopener noreferrer">
+                {t.openTikTok}
+              </a>
+            )}
           </p>
         )}
         {fromArchive && (

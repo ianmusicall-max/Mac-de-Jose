@@ -57,6 +57,8 @@ export const strings = {
     faq: { title: 'Frequently asked questions' },
     toolLinks: { title: 'Other tools', open: 'Open' },
     downloader: {
+      tikTokUnavailable: 'TikTok didn’t provide a downloadable file. Open the post and choose Share → Save video if that option is available.',
+      openTikTok: 'Open in TikTok',
       urlLabel: "Paste the post's link",
       kindLabel: { video: 'video', audio: 'audio', image: 'image' } as Record<'video' | 'audio' | 'image', string>,
       kindTitle: { video: 'Videos', audio: 'Audio', image: 'Images' } as Record<'video' | 'audio' | 'image', string>,
@@ -208,6 +210,8 @@ export const strings = {
     faq: { title: 'Preguntas frecuentes' },
     toolLinks: { title: 'Otras herramientas', open: 'Abrir' },
     downloader: {
+      tikTokUnavailable: 'TikTok no entregó un archivo descargable. Abre la publicación y elige Compartir → Guardar vídeo si aparece esa opción.',
+      openTikTok: 'Abrir en TikTok',
       urlLabel: 'Pega el enlace de la publicación',
       kindLabel: { video: 'vídeo', audio: 'audio', image: 'imagen' } as Record<'video' | 'audio' | 'image', string>,
       kindTitle: { video: 'Vídeos', audio: 'Audios', image: 'Imágenes' } as Record<'video' | 'audio' | 'image', string>,
@@ -359,6 +363,8 @@ export const strings = {
     faq: { title: 'Perguntas frequentes' },
     toolLinks: { title: 'Outras ferramentas', open: 'Abrir' },
     downloader: {
+      tikTokUnavailable: 'O TikTok não forneceu um arquivo para baixar. Abra a publicação e escolha Compartilhar → Salvar vídeo, se a opção estiver disponível.',
+      openTikTok: 'Abrir no TikTok',
       urlLabel: 'Cole o link da publicação',
       kindLabel: { video: 'vídeo', audio: 'áudio', image: 'imagem' } as Record<'video' | 'audio' | 'image', string>,
       kindTitle: { video: 'Vídeos', audio: 'Áudios', image: 'Imagens' } as Record<'video' | 'audio' | 'image', string>,
