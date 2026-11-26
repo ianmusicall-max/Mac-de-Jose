@@ -28,6 +28,8 @@ export const strings = {
     },
     home: {
       titleLead: 'Downloads from',
+      reelyTitle: 'Meet Reely',
+      reelyVideo: 'SnapReel’s 15-second Reely video',
       titleAccent: 'Instagram, TikTok, Facebook and YouTube',
       intro: "Choose the platform and paste the post's link.",
       open: (name: string) => `Open ${name}`,
@@ -177,6 +179,8 @@ export const strings = {
     },
     home: {
       titleLead: 'Descargas de',
+      reelyTitle: 'Conoce a Reely',
+      reelyVideo: 'Anuncio de Reely para SnapReel, 15 segundos',
       titleAccent: 'Instagram, TikTok, Facebook y YouTube',
       intro: 'Elige la plataforma y pega el enlace de la publicación.',
       open: (name: string) => `Abrir ${name}`,
@@ -326,6 +330,8 @@ export const strings = {
     },
     home: {
       titleLead: 'Downloads de',
+      reelyTitle: 'Conheça o Reely',
+      reelyVideo: 'Vídeo de 15 segundos do Reely para o SnapReel',
       titleAccent: 'Instagram, TikTok, Facebook e YouTube',
       intro: 'Escolha a plataforma e cole o link da publicação.',
       open: (name: string) => `Abrir ${name}`,

@@ -27,18 +27,11 @@ export default function Home() {
           <div className="hero-copy">
             <h1 id="home-title">{t.titleLead}{' '}<span>{t.titleAccent}</span></h1>
             <p className="hero-intro">{t.intro}</p>
+            <a className="reely-jump" href="#reely">{t.reelyTitle}</a>
           </div>
-          {/* Optional: drop an exported mascot image at public/mascot/reely.png
-              and it shows up here with no further changes. Hidden by default
-              and while missing, via onError, so nothing breaks until it exists. */}
-          <img
-            className="hero-mascot"
-            src="/mascot/reely.png"
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            onError={(event) => { event.currentTarget.style.display = 'none'; }}
-          />
+          {/* The locally hosted illustration uses its intrinsic aspect ratio. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="hero-mascot" src="/mascot/reely.png" alt="" width={640} height={467} />
         </section>
         <div className="tool-links platform-links">
           {PLATFORMS.map(({ name, path, Icon }) => (
@@ -50,6 +43,20 @@ export default function Home() {
             </a>
           ))}
         </div>
+        <section id="reely" className="reely-preview" aria-labelledby="reely-title">
+          <h2 id="reely-title">{t.reelyTitle}</h2>
+          <video
+            aria-label={t.reelyVideo}
+            controls
+            playsInline
+            preload="none"
+            poster="/mascot/reely-poster.webp"
+            width={1080}
+            height={1920}
+          >
+            <source src="/mascot/reely.mp4" type="video/mp4" />
+          </video>
+        </section>
         <HowItWorks steps={HOME_STEPS} />
         <Benefits />
       </main>
