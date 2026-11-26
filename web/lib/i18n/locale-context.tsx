@@ -3,17 +3,27 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { DEFAULT_LOCALE, isLocale, type Locale } from './locale';
 
 const STORAGE_KEY = 'snapreel-locale';
+const GEO_COOKIE = 'snapreel-geo-locale';
 
 const LocaleContext = createContext<{ locale: Locale; setLocale: (next: Locale) => void }>({
   locale: DEFAULT_LOCALE,
   setLocale: () => {},
 });
 
+function readGeoCookie(): Locale | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${GEO_COOKIE}=([^;]+)`));
+  const value = match?.[1];
+  return value && isLocale(value) ? value : null;
+}
+
 /**
- * English is always the default, both on the server and on first visit.
- * Only an explicit choice from the header's EN/ES/PT switcher, persisted in
- * localStorage, changes it. Page <title> and other static metadata stay
- * English-only regardless of locale: this only swaps visible content.
+ * English is what the server renders. On first visit, an explicit choice
+ * from the header's EN/ES/PT switcher (localStorage) always wins; failing
+ * that, the Worker's `snapreel-geo-locale` cookie — set from the visitor's
+ * real country via Cloudflare's `cf-ipcountry` header (see worker/index.ts)
+ * — picks es/pt/en; failing that too, English stays the default. Page
+ * <title> and other static metadata stay English-only regardless of locale:
+ * this only swaps visible content.
  */
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
@@ -24,8 +34,11 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       if (stored && isLocale(stored)) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocaleState(stored);
+        return;
       }
-    } catch { /* Storage may be disabled; English stays the default. */ }
+    } catch { /* Storage may be disabled; fall through to the geo hint. */ }
+    const geo = readGeoCookie();
+    if (geo) setLocaleState(geo);
   }, []);
 
   useEffect(() => {
