@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-const title = 'VideoVault · Instagram, TikTok y YouTube';
-const description = 'Elige Instagram, TikTok o YouTube para descargar vídeos, audio o fotos con VideoVault.';
+const title = 'VideoVault · Instagram, TikTok, Facebook y YouTube';
+const description = 'Elige Instagram, TikTok, Facebook o YouTube para descargar vídeos, audio o fotos con VideoVault.';
 
 export const metadata: Metadata = {
   title: { default: title, template: '%s' },

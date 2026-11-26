@@ -29,7 +29,8 @@ export class MediaArchive {
     const storedIds=new Set((await Promise.all(old.map(async item=>item.assetId&&await this.storage.exists('files/'+item.assetId)?item.assetId:null))).filter((id):id is string=>!!id));
     const items=await Promise.all(result.items.map(async item=>{
       let saved=old.find(existing=>existing.mediaKey&&existing.mediaKey===item.mediaKey&&existing.kind===item.kind);
-      if(!saved&&item.kind==='video'&&incomingVideos.length===1&&previousVideos.length===1)saved=previousVideos[0];
+      if(!saved&&item.kind==='video'&&incomingVideos.length===1&&previousVideos.length===1&&
+        (!item.mediaKey?.startsWith('facebook-')||item.mediaKey===previousVideos[0].mediaKey))saved=previousVideos[0];
       const higherQuality=item.kind==='image'&&saved&&Number(item.width)*Number(item.height)>Number(saved.width||0)*Number(saved.height||0);
       if(saved?.assetId&&!higherQuality&&storedIds.has(saved.assetId))return {...item,assetId:saved.assetId,isStored:true};
       return {...item,assetId:item.assetId||await digest(item.url)};

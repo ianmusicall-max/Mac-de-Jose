@@ -1,6 +1,6 @@
 import { OriginBackoff } from './rate-limit.ts';
 const originBackoff = new OriginBackoff();
-export type Media = { url: string; kind: 'video' | 'audio' | 'image'; title: string; isPreview?: boolean; assetId?: string; derivedFromVideo?: boolean; albumIndex?:number; mediaKey?:string; isStored?:boolean; width?:number; height?:number };
+export type Media = { url: string; kind: 'video' | 'audio' | 'image'; title: string; isPreview?: boolean; assetId?: string; derivedFromVideo?: boolean; albumIndex?:number; mediaKey?:string; isStored?:boolean; width?:number; height?:number; quality?: 'HD' | 'SD' };
 export function publicUrl(raw: string): URL {
   const url = new URL(raw);
   const host = url.hostname.toLowerCase();

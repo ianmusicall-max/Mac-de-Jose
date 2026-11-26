@@ -15,7 +15,7 @@ export type Tool = {
   nav: string;
   /** Which format the downloader starts on. */
   kind: Media['kind'];
-  platform?: 'tiktok' | 'youtube';
+  platform?: 'tiktok' | 'youtube' | 'facebook';
   /** <title> and meta description. */
   title: string;
   description: string;
@@ -122,6 +122,28 @@ export const TOOLS: Tool[] = [
         question: '¿Qué enlaces funcionan?',
         answer: 'Puedes pegar la dirección completa o un enlace corto de un vídeo público. Si TikTok pide iniciar sesión, el vídeo no estará disponible aquí.',
       },
+    ],
+  },
+  {
+    path: '/facebook',
+    nav: 'Facebook',
+    kind: 'video',
+    platform: 'facebook',
+    title: 'Descargar vídeos de Facebook en MP4 · VideoVault',
+    description: 'Busca y descarga vídeos y reels públicos de Facebook en MP4.',
+    heading: 'Descargar vídeos',
+    headingAccent: 'de Facebook en MP4',
+    intro: 'Pega un enlace público de Facebook y elige entre las calidades disponibles.',
+    placeholder: 'https://www.facebook.com/reel/…',
+    steps: [
+      { heading: 'Copia el enlace', body: 'En Facebook, abre el vídeo o reel y elige «Compartir» y «Copiar enlace».' },
+      { heading: 'Busca el vídeo', body: 'Pega el enlace de Facebook en el campo de arriba y pulsa «Buscar vídeo».' },
+      { heading: 'Descarga el MP4', body: 'Revisa la vista previa y descarga la versión que prefieras.' },
+    ],
+    faq: [
+      { question: '¿Qué enlaces de Facebook funcionan?', answer: 'Puedes usar enlaces de vídeos y reels que se puedan abrir sin iniciar sesión, incluidos los enlaces cortos de Facebook.' },
+      { question: '¿Cuándo aparece la opción HD?', answer: 'Verás HD cuando Facebook ofrezca un MP4 en esa calidad. Las opciones dependen de cada vídeo.' },
+      { question: '¿Dónde encuentro el archivo?', answer: 'Revisa la carpeta Descargas o el historial de descargas de tu navegador.' },
     ],
   },
   {

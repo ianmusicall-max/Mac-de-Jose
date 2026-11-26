@@ -1,4 +1,5 @@
 'use client';
+import type { Tool } from '@/lib/tools';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowUpRight, Film, ImageIcon, Link2, LoaderCircle, Music2, Clock3 } from 'lucide-react';
 import type { Media } from '@/lib/media';
@@ -43,7 +44,7 @@ export function Downloader({
 }: {
   defaultKind?: Media['kind'];
   placeholder: string;
-  platform?: 'tiktok' | 'youtube';
+  platform?: Tool['platform'];
 }) {
   const [url, setUrl] = useState('');
   const [selected, setSelected] = useState<Media['kind']>(defaultKind);

@@ -4,6 +4,7 @@ import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
 import { resolveInstagram, instagramPost } from '@/lib/instagram';
 import { isTikTok, resolveTikTok, tikTokVideoId } from '@/lib/tiktok';
+import { FACEBOOK_UNAVAILABLE, isFacebook, resolveFacebook } from '@/lib/facebook';
 import { resolveYouTube, youtubeVideoId } from '@/lib/youtube';
 import { ResolutionService } from '@/lib/resolution-service';
 import {archive,sharedBackoff,instagramContext} from '@/lib/server-storage';
@@ -30,6 +31,15 @@ async function resolve(url: string) {
     }
     return resolveTikTok(page, await boundedText(response), candidate =>
       fetchOrigin('video', candidate, {headers:{Range:'bytes=0-0'}}));
+  }
+  if (isFacebook(source)) {
+    const page = new URL(response.url || url);
+    if (!isFacebook(page) || !type.toLowerCase().includes('text/html')) {
+      await response.body?.cancel();
+      throw new Error(FACEBOOK_UNAVAILABLE);
+    }
+    return resolveFacebook(page, await boundedText(response), candidate =>
+      fetchOrigin('video', candidate, { headers: { Range: 'bytes=0-0' } }));
   }
   if (youtube) {
     if (!type.includes('text/html')) {
@@ -69,6 +79,9 @@ export async function POST(request: Request) {
     url.hash = '';
     if (payload.platform === 'tiktok' && !isTikTok(url)) {
       throw new Error('Pega un enlace de vídeo de TikTok.');
+    }
+    if (payload.platform === 'facebook' && !isFacebook(url)) {
+      throw new Error('Pega un enlace de vídeo o reel de Facebook.');
     }
     const youtube = youtubeVideoId(url);
     if (payload.platform === 'youtube' && !youtube) {

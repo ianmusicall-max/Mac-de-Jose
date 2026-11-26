@@ -49,7 +49,7 @@ export function ResultCard({
       <div className={item.kind === 'video' ? 'video-details' : ''}>
         <h3>{item.title || `Archivo ${position}`}</h3>
         <small>
-          {describe(item)} · {new URL(item.url).hostname}
+          {describe(item)}{item.quality && ` · ${item.quality}`} · {new URL(item.url).hostname}
           {dimensions}
         </small>
       </div>
