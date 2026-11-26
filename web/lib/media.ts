@@ -31,7 +31,12 @@ export async function remote(raw: string, init?: RequestInit, timeoutMs = 20_000
     if(guard)await guard.check(url.origin);
     originBackoff.check(url.origin);
     await validateDns(url.hostname);
-    const response = await fetch(url, { ...requestOptions, redirect: 'manual', signal: AbortSignal.timeout(timeoutMs), headers: { 'User-Agent': 'Mozilla/5.0 SnapReel/1.0', Accept: '*/*', ...requestOptions?.headers } });
+    const response = await fetch(url, { ...requestOptions, redirect: 'manual', signal: AbortSignal.timeout(timeoutMs), headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+      Accept: '*/*',
+      ...requestOptions?.headers,
+    } });
     if ([301,302,303,307,308].includes(response.status)) {
       const location = response.headers.get('location');
       await response.body?.cancel();
