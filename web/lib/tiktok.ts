@@ -78,22 +78,31 @@ export async function resolveTikTok(
     ...addressUrls(item.video.download?.url),
   ]);
   const title = typeof item.desc === 'string' && item.desc.trim() ? item.desc.trim() : `TikTok ${id}`;
+  if (candidates.size === 0) {
+    throw new Error('TikTok no ofreció un archivo MP4 descargable para este vídeo. (sin enlaces de vídeo en la página)');
+  }
+  const attempts: string[] = [];
   for (const candidate of [...candidates].slice(0, 8)) {
     try {
       if (typeof candidate !== 'string') continue;
       const url = publicUrl(new URL(candidate, page).href).href;
       const target = new URL(url);
-      if (isTikTok(target) || target.pathname.endsWith('/media-video-hvc1/')) continue;
+      if (isTikTok(target) || target.pathname.endsWith('/media-video-hvc1/')) {
+        attempts.push('omitido (dominio de tiktok.com)');
+        continue;
+      }
       const response = await fetchVideo(url);
       const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
       await response.body?.cancel();
       if (response.ok && type === 'video/mp4') {
         return { title, items: [{ url, kind: 'video', title }] };
       }
+      attempts.push(`HTTP ${response.status}, content-type=${type || '(ninguno)'}`);
     } catch (error) {
       if (error instanceof OriginRateLimitError) throw error;
+      attempts.push(error instanceof Error ? error.message : 'error desconocido');
     }
   }
 
-  throw new Error('TikTok no ofreció un archivo MP4 descargable para este vídeo.');
+  throw new Error(`TikTok no ofreció un archivo MP4 descargable para este vídeo. (${attempts.join(' · ')})`);
 }
