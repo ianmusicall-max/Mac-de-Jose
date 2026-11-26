@@ -1,5 +1,6 @@
 import {sourceKey} from './archive.ts';
 import {OriginRateLimitError} from './rate-limit.ts';
+import {isFacebook} from './facebook.ts';
 import {ResolutionCache} from './resolution-cache.ts';
 import type {ResolvedMedia} from './instagram.ts';
 
@@ -29,8 +30,9 @@ export class ResolutionService {
       const saved=await this.archive.find(key);
       const needsImages=images&&saved&&key.startsWith('https://www.instagram.com/p/')&&
         (!saved.items.some(item=>item.kind==='image')||saved.albumSize===undefined);
-      if(!refresh&&!needsImages&&saved?.items.length)return saved;
-      if(refresh||needsImages)this.cache.invalidate(key);
+      const needsFacebookImages=saved?.items.length&&isFacebook(new URL(key))&&!saved.facebookImagesChecked;
+      if(!refresh&&!needsImages&&!needsFacebookImages&&saved?.items.length)return saved;
+      if(refresh||needsImages||needsFacebookImages)this.cache.invalidate(key);
       try {
         const result=await this.cache.get(key,async()=>{
           const loaded=await this.load(key);
@@ -43,6 +45,10 @@ export class ResolutionService {
         if(result.retryAfter||!result.items.length)this.cache.invalidate(key);
         return result;
       } catch(error) {
+        if(needsFacebookImages&&saved)return {
+          ...saved,
+          ...(error instanceof OriginRateLimitError?{retryAfter:error.retryAfter}:{}),
+        };
         if(saved?.items.length&&error instanceof OriginRateLimitError)return {
           ...saved,
           warning:`Instagram está limitando las consultas. Conservamos los resultados disponibles. Podrás intentar actualizar en ${error.retryAfter} segundos; la disponibilidad depende del origen.`,

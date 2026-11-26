@@ -41,10 +41,12 @@ export function Downloader({
   defaultKind = 'video',
   placeholder,
   platform,
+  formats = KINDS,
 }: {
   defaultKind?: Media['kind'];
   placeholder: string;
   platform?: Tool['platform'];
+  formats?: Tool['formats'];
 }) {
   const [url, setUrl] = useState('');
   const [selected, setSelected] = useState<Media['kind']>(defaultKind);
@@ -201,10 +203,10 @@ export function Downloader({
           </button>
         </div>
 
-        {!platform && (
+        {formats.length > 1 && (
           <fieldset className="formats format-options">
             <legend>Formato de descarga</legend>
-            {KINDS.map(option => {
+            {formats.map(option => {
               const Icon = KIND_ICON[option];
               return (
                 <label
@@ -231,7 +233,7 @@ export function Downloader({
           </fieldset>
         )}
 
-        {(!platform || waiting > 0) && (
+        {(formats.length > 1 || waiting > 0) && (
           <small className="format-help">
             {waiting > 0
               ? `El origen está en espera (${waiting}s). Los archivos guardados siguen disponibles.`
@@ -243,7 +245,7 @@ export function Downloader({
       {selected === 'image' && searched && (
         <div className="image-toolbar">
           <button type="button" className="text-button" disabled={busy} onClick={event => detect(event, true)}>
-            Actualizar álbum
+            {platform === 'facebook' ? 'Actualizar imágenes' : 'Actualizar álbum'}
           </button>
           {visible.length > 1 && <AlbumDownloadButton items={visible} />}
         </div>

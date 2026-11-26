@@ -67,3 +67,26 @@ test('cooldowns survive reloads, expire and apply to canonical Instagram aliases
   assert.equal(readCooldown('{"origin":"https://www.instagram.com","until":2000}',2000),null);
   assert.equal(readCooldown('broken'),null);
 });
+
+
+test('older Facebook results check for images once while preserving offline access', async () => {
+  const url = 'https://www.facebook.com/reel/123';
+  const updated: ResolvedMedia = {
+    ...media,
+    facebookImagesChecked: true,
+    items: [...media.items, { url: 'https://scontent.xx.fbcdn.net/cover.jpg', kind: 'image', title: 'Cover' }],
+  };
+  let saved = media;
+  let calls = 0;
+  const service = new ResolutionService({
+    find: async () => saved,
+    save: async (_url, result) => saved = result,
+  }, async () => {
+    calls++;
+    return updated;
+  });
+  assert.deepEqual(await service.resolveSaved(url), media);
+  assert.deepEqual(await service.resolve(url), updated);
+  assert.deepEqual(await service.resolve(url), updated);
+  assert.equal(calls, 1);
+});

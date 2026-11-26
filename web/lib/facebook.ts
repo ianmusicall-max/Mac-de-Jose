@@ -1,11 +1,16 @@
 import type { ResolvedMedia } from './instagram.ts';
-import { extract, publicUrl, type Media } from './media.ts';
+import { extract, publicUrl, kind, type Media } from './media.ts';
 import { OriginRateLimitError } from './rate-limit.ts';
 
 export const FACEBOOK_UNAVAILABLE = 'Facebook no ofreció un MP4 público para este enlace. Comprueba que el vídeo se abre sin iniciar sesión.';
 
 export function isFacebook(url: URL): boolean {
   return ['facebook.com', 'www.facebook.com', 'm.facebook.com', 'web.facebook.com', 'fb.watch', 'www.fb.watch'].includes(url.hostname);
+}
+
+function isFacebookPhoto(page: URL): boolean {
+  return /^\/(?:photo(?:\.php)?|photos)(?:\/|$)/i.test(page.pathname) ||
+    /\/photos\//i.test(page.pathname);
 }
 
 function facebookCdn(raw: string): string | undefined {
@@ -62,7 +67,24 @@ export async function resolveFacebook(
   for (const item of available) {
     if (item && !items.has(item.quality)) items.set(item.quality, item);
   }
-  if (!items.size) throw new Error(FACEBOOK_UNAVAILABLE);
   if (items.has('HD') || items.has('SD')) items.delete(undefined);
-  return { title, items: [...items.values()] };
+
+  const images: Media[] = [];
+  for (const candidate of metadata.filter(item => item.kind === 'image').slice(0, 3)) {
+    const url = facebookCdn(candidate.url);
+    if (!url || new URL(url).hostname.startsWith('static.')) continue;
+    try {
+      const response = await probe(url);
+      const type = response.headers.get('content-type')?.toLowerCase() ?? '';
+      await response.body?.cancel();
+      if (response.ok && kind(type) === 'image' && facebookCdn(response.url || url)) {
+        images.push({ ...candidate, url, isPreview: items.size > 0 || !isFacebookPhoto(page) });
+      }
+    } catch (error) {
+      if (!items.size && !images.length && error instanceof OriginRateLimitError) throw error;
+    }
+  }
+
+  if (!items.size && !images.length) throw new Error(FACEBOOK_UNAVAILABLE);
+  return { title, items: [...items.values(), ...images], facebookImagesChecked: true };
 }

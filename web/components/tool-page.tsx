@@ -29,7 +29,7 @@ export function ToolPage({ tool }: { tool: Tool }) {
           <p className="hero-intro">{tool.intro}</p>
         </section>
 
-        <Downloader defaultKind={tool.kind} placeholder={tool.placeholder} platform={tool.platform} />
+        <Downloader defaultKind={tool.kind} placeholder={tool.placeholder} platform={tool.platform} formats={tool.formats} />
 
         <HowItWorks steps={tool.steps} />
         {!tool.platform && <Benefits />}
