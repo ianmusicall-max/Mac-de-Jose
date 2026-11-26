@@ -3,7 +3,7 @@ import { resolveYoutubeJob } from '@/lib/youtube-jobs';
 import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
 import { resolveInstagram, instagramPost } from '@/lib/instagram';
-import { isTikTok, resolveTikTok, tikTokMediaHeaders, tikTokVideoId } from '@/lib/tiktok';
+import { TIKTOK_MP4_UNAVAILABLE, isTikTok, resolveTikTok, tikTokMediaHeaders, tikTokVideoId } from '@/lib/tiktok';
 import { isFacebook, resolveFacebookPage } from '@/lib/facebook';
 import { resolveYouTube, youtubeVideoId } from '@/lib/youtube';
 import { ResolutionService } from '@/lib/resolution-service';
@@ -33,8 +33,27 @@ async function resolve(url: string) {
       await response.body?.cancel();
       throw new Error('Usa el enlace de una publicación pública de vídeo de TikTok.');
     }
-    return resolveTikTok(page, await boundedText(response), candidate =>
-      fetchOrigin('video', candidate, { headers: tikTokMediaHeaders(new URL(candidate)) }, tikTokMediaHeaders));
+    const probe = (candidate: string) =>
+      fetchOrigin('video', candidate, { headers: tikTokMediaHeaders(new URL(candidate)) }, tikTokMediaHeaders);
+    try {
+      return await resolveTikTok(page, await boundedText(response), probe);
+    } catch (error) {
+      const id = tikTokVideoId(page);
+      const alternate = new URL(`https://www.tiktok.com/@i/video/${id}`);
+      if (!(error instanceof Error) || error.message !== TIKTOK_MP4_UNAVAILABLE || page.pathname === alternate.pathname) throw error;
+
+      try {
+        const retry = await fetchOrigin('page', alternate.href);
+        const target = new URL(retry.url || alternate.href);
+        if (tikTokVideoId(target) === id && retry.headers.get('content-type')?.includes('text/html')) {
+          return await resolveTikTok(target, await boundedText(retry), probe);
+        }
+        await retry.body?.cancel();
+      } catch (fallbackError) {
+        if (fallbackError instanceof OriginRateLimitError) throw fallbackError;
+      }
+      throw error;
+    }
   }
   if (youtube) {
     if (!type.includes('text/html')) {

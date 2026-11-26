@@ -105,3 +105,14 @@ test('checks the official playback link even when it comes after the first four 
   });
   assert.equal(result.items[0]?.url, playback);
 });
+
+
+test('checks official playback URLs without a rendition codec label', async () => {
+  const playback = 'https://www.tiktok.com/aweme/v1/play/?video_id=test';
+  const video = { bitrateInfo: [{ PlayAddr: { UrlList: [playback] } }] };
+  const result = await resolveTikTok(page, html({ ...item, video }), async candidate => {
+    assert.equal(candidate, playback);
+    return new Response(null, { headers: { 'Content-Type': 'video/mp4' } });
+  });
+  assert.equal(result.items[0]?.url, playback);
+});

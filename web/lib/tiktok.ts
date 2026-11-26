@@ -77,12 +77,16 @@ export async function resolveTikTok(
     throw new Error('TikTok no entregó un vídeo público para este enlace. Comprueba que se abre sin iniciar sesión.');
   }
 
-  const variants = (Array.isArray(item.video.bitrateInfo) ? item.video.bitrateInfo : [])
-    .filter(variant => variant && typeof variant.PlayAddr === 'object' &&
+  const bitrates = Array.isArray(item.video.bitrateInfo) ? item.video.bitrateInfo : [];
+  const variants = bitrates.filter(variant => variant && typeof variant.PlayAddr === 'object' &&
       typeof variant.PlayAddr?.UrlKey === 'string' && /_(?:h264|bytevc1)_/i.test(variant.PlayAddr.UrlKey))
     .sort((a, b) => (b.Bitrate ?? 0) - (a.Bitrate ?? 0));
   const variantUrls = [...new Set(variants.flatMap(variant => addressUrls(variant.PlayAddr)))];
+  // The public player endpoint can supply an MP4 even if the rendition has no codec label.
+  const playbackUrls = bitrates.flatMap(variant => addressUrls(variant?.PlayAddr))
+    .filter(value => typeof value === 'string' && URL.canParse(value, page) && isTikTokPlayback(new URL(value, page)));
   const candidates = new Set([
+    ...playbackUrls,
     ...addressUrls(item.video.downloadAddr),
     ...addressUrls(item.video.download?.url),
     ...variantUrls,
