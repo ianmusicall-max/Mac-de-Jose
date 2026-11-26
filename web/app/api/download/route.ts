@@ -1,5 +1,6 @@
 import {youtubeFileKey} from '@/lib/youtube-jobs';
 import {remote,kind,publicUrl} from '@/lib/media';
+import {isTikTokCdn} from '@/lib/tiktok';
 import {OriginRateLimitError} from '@/lib/rate-limit';
 import {bucket,storedResponse,storedHeaders,sharedBackoff} from '@/lib/server-storage';
 import {digest} from '@/lib/archive';
@@ -45,7 +46,9 @@ export async function GET(request:Request){
   const url=publicUrl(raw).href;const assetId=await digest(url);
   if(id&&id!==assetId)throw new Error('El archivo guardado no está disponible.');
   const saved=await cachedFile(assetId,request.headers.get('range'),inline,undefined,title);if(saved)return finish(saved);
-  const response=await remote(url,{headers:{'Accept-Encoding':'identity'}},10*60_000,sharedBackoff);
+  const headers:Record<string,string>={'Accept-Encoding':'identity'};
+  if(isTikTokCdn(new URL(url).hostname))headers.Referer='https://www.tiktok.com/';
+  const response=await remote(url,{headers},10*60_000,sharedBackoff);
   const type=response.headers.get('content-type')||'';
   if(!kind(type)){await response.body?.cancel();throw new Error('El destino no es un archivo multimedia descargable.');}
   try{assertFullResponse(response.status,response.headers.get('content-range'));}catch(error){await response.body?.cancel();throw error;}

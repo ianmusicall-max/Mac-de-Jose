@@ -34,7 +34,7 @@ async function resolve(url: string) {
       throw new Error('Usa el enlace de una publicación pública de vídeo de TikTok.');
     }
     return resolveTikTok(page, await boundedText(response), candidate =>
-      fetchOrigin('video', candidate, {headers:{Range:'bytes=0-0'}}));
+      fetchOrigin('video', candidate, {headers:{Range:'bytes=0-0',Referer:'https://www.tiktok.com/'}}));
   }
   if (youtube) {
     if (!type.includes('text/html')) {

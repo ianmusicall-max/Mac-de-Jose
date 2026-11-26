@@ -11,6 +11,15 @@ export function tikTokVideoId(url: URL): string | undefined {
   return /^\/@[\w.-]+\/video\/(\d+)\/?$/.exec(url.pathname)?.[1];
 }
 
+/**
+ * TikTok's actual video files are served from a handful of ByteDance CDN
+ * domains (not tiktok.com itself), and that CDN rejects requests that don't
+ * carry a Referer pointing back at tiktok.com.
+ */
+export function isTikTokCdn(hostname: string): boolean {
+  return /tiktok|ibyteimg|ibytedtos/i.test(hostname);
+}
+
 type Address = string | { UrlList?: string[]; UrlKey?: string; src?: string };
 type TikTokItem = {
   id?: string;

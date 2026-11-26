@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isTikTok, resolveTikTok } from '../lib/tiktok.ts';
+import { isTikTok, isTikTokCdn, resolveTikTok } from '../lib/tiktok.ts';
 import { OriginRateLimitError } from '../lib/rate-limit.ts';
 
 const page = new URL('https://www.tiktok.com/@creador/video/123');
@@ -45,4 +45,10 @@ test('reconoce enlaces cortos de TikTok y rechaza dominios que lo imitan', () =>
   assert.ok(isTikTok(new URL('https://vm.tiktok.com/codigo/')));
   assert.ok(isTikTok(new URL('https://www.tiktok.com/t/codigo/')));
   assert.equal(isTikTok(new URL('https://tiktok.com.example.org/@creador/video/123')), false);
+});
+
+test('reconoce los dominios de CDN que exigen Referer', () => {
+  assert.ok(isTikTokCdn('v16-webapp-prime.tiktok.com'));
+  assert.ok(isTikTokCdn('v9-tiktok.ibyteimg.com'));
+  assert.equal(isTikTokCdn('video.example.com'), false);
 });
