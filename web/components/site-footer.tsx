@@ -32,7 +32,7 @@ export function SiteFooter() {
         </div>
 
         <div className="footer-note">
-          <h2>Sobre VideoVault</h2>
+          <h2>Sobre SnapReel</h2>
           <p>
             Una herramienta para guardar contenido público sin cuentas ni instalaciones. No estamos
             asociados con Instagram ni con Meta.

@@ -13,7 +13,7 @@ const KIND_LABEL = { video: 'vídeo', audio: 'audio', image: 'imagen' } as const
 const KIND_TITLE = { video: 'Vídeos', audio: 'Audios', image: 'Imágenes' } as const;
 const KIND_ICON = { video: Film, audio: Music2, image: ImageIcon } as const;
 const KINDS = ['video', 'audio', 'image'] as const;
-const HISTORY_KEY = 'videovault-links';
+const HISTORY_KEY = 'snapreel-links';
 const HISTORY_SIZE = 6;
 
 type ResolveResponse = {
@@ -69,7 +69,7 @@ export function Downloader({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistory(readHistory());
     try {
-      setCooldown(readCooldown(localStorage.getItem('videovault-cooldown')));
+      setCooldown(readCooldown(localStorage.getItem('snapreel-cooldown')));
       setNow(Date.now());
     } catch { /* Storage may be disabled. */ }
   }, []);
@@ -145,7 +145,7 @@ export function Downloader({
         const nextCooldown = { origin: originOf(link), until: current + (data.retryAfter || 60) * 1000 };
         setNow(current);
         setCooldown(nextCooldown);
-        try { localStorage.setItem('videovault-cooldown', JSON.stringify(nextCooldown)); }
+        try { localStorage.setItem('snapreel-cooldown', JSON.stringify(nextCooldown)); }
         catch { /* The in-memory wait remains available. */ }
       }
       if (!response.ok) throw new Error(data.error || 'No se pudo analizar el enlace.');

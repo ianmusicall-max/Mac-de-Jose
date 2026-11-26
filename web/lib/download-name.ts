@@ -13,10 +13,10 @@ export function downloadName(name:string,contentType:string):string {
   'audio/webm':'webm','audio/aac':'aac','audio/wav':'wav','audio/flac':'flac',
   'image/jpeg':'jpg','image/png':'png','image/gif':'gif','image/webp':'webp','image/avif':'avif','image/heic':'heic','application/zip':'zip',
  };
- const safe=name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,100)||'videovault';
+ const safe=name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,100)||'snapreel';
  const extension=extensions[type];
  if(!extension)return safe;
- const stem=safe.replace(/\.[^.]*$/,'').replace(/^\.+/,'')||'videovault';
+ const stem=safe.replace(/\.[^.]*$/,'').replace(/^\.+/,'')||'snapreel';
  return `${stem}.${extension}`;
 }
 
@@ -34,7 +34,7 @@ export function readableFilename(name?: string | null): string | undefined {
  const value = name?.trim();
  if (!value) return;
  const stem = value.replace(/\.[a-z0-9]{2,5}$/i, '');
- if (/^(?:(?:videovault|tiktok|youtube|instagram|facebook|video|audio|image|imagen|photo|archivo)(?:[-_ ]*\d+|[-_ ]*(?:audio|imagen|album|video)(?:[-_ ]*\d+)?)?|[\da-f-]{12,}|[\d_-]+)$/i.test(stem)) return;
+ if (/^(?:(?:snapreel|tiktok|youtube|instagram|facebook|video|audio|image|imagen|photo|archivo)(?:[-_ ]*\d+|[-_ ]*(?:audio|imagen|album|video)(?:[-_ ]*\d+)?)?|[\da-f-]{12,}|[\d_-]+)$/i.test(stem)) return;
  if (/^[\w-]{20,}$/.test(stem) && /\d/.test(stem) && /[a-z]/i.test(stem)) return;
  return value;
 }
@@ -44,7 +44,7 @@ export function namedDownload(name: string, type: string): string {
   .replace(/\p{Cc}/gu, ' ')
   .replace(/^[.\s]+|[.\s]+$/g, '');
  const stem = clean.replace(/\.(?:bin|mp4|webm|mov|m4v|ogv|mpeg|ts|avi|mkv|3gp|3g2|m4a|mp3|ogg|aac|wav|flac|jpg|jpeg|png|gif|webp|avif|heic|svg|img|zip)$/i, '');
- const shortened = Array.from(stem.replace(/\s+/g, ' ')).slice(0, 100).join('').trim() || 'VideoVault';
+ const shortened = Array.from(stem.replace(/\s+/g, ' ')).slice(0, 100).join('').trim() || 'SnapReel';
  const mime = type.split(';')[0].trim().toLowerCase();
  const extension = mime.startsWith('image/') ? imageExtension(mime) : downloadName('file', mime).split('.')[1];
  return extension ? `${shortened}.${extension}` : shortened;

@@ -4,7 +4,7 @@ import {attachment,dispositionFilename,downloadName,namedDownload,readableFilena
 
 test('gives extensionless CDN videos their actual file extension',()=>{
  assert.equal(downloadName('123456789','video/mp4'),'123456789.mp4');
- assert.equal(downloadName('','video/mp4'),'videovault.mp4');
+ assert.equal(downloadName('','video/mp4'),'snapreel.mp4');
 });
 test('repairs misleading names from older archived videos',()=>{
  assert.equal(downloadName('video.bin','video/mp4'),'video.mp4');

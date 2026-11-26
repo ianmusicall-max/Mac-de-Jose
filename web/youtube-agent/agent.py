@@ -1,4 +1,4 @@
-"""Prepare queued public YouTube videos and send MP4 files to VideoVault."""
+"""Prepare queued public YouTube videos and send MP4 files to SnapReel."""
 
 import json
 import os
@@ -12,11 +12,11 @@ import time
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-ENDPOINT = os.environ["VIDEOVAULT_YOUTUBE_ENDPOINT"]
-TOKEN = os.environ["VIDEOVAULT_YOUTUBE_TOKEN"]
-PROFILE = os.environ["VIDEOVAULT_FIREFOX_PROFILE"]
+ENDPOINT = os.environ["SNAPREEL_YOUTUBE_ENDPOINT"]
+TOKEN = os.environ["SNAPREEL_YOUTUBE_TOKEN"]
+PROFILE = os.environ["SNAPREEL_FIREFOX_PROFILE"]
 MAX_BYTES = 40 * 1024 * 1024
-BIN = Path("/opt/videovault/bin")
+BIN = Path("/opt/snapreel/bin")
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -32,7 +32,7 @@ def call(method="GET", *, video_id=None, reason=None, video=None):
     if reason:
         params["reason"] = reason
     url = ENDPOINT + ("?" + urlencode(params) if params else "")
-    headers = {"Authorization": f"Bearer {TOKEN}", "User-Agent": "VideoVault-YouTube-Agent/1.0"}
+    headers = {"Authorization": f"Bearer {TOKEN}", "User-Agent": "SnapReel-YouTube-Agent/1.0"}
     if video is None:
         with opener.open(Request(url, method=method, headers=headers), timeout=15) as response:
             return json.load(response)
@@ -101,7 +101,7 @@ def main():
                 time.sleep(12)
                 continue
 
-            with tempfile.TemporaryDirectory(prefix="videovault-youtube-") as directory:
+            with tempfile.TemporaryDirectory(prefix="snapreel-youtube-") as directory:
                 try:
                     video, reason = prepare(video_id, Path(directory))
                 except (OSError, ValueError, subprocess.TimeoutExpired):
@@ -113,7 +113,7 @@ def main():
                 print(video_id, "ready" if video else reason, flush=True)
             time.sleep(30)
         except (OSError, ValueError) as error:
-            print("VideoVault request failed:", type(error).__name__, getattr(error, "code", ""), flush=True)
+            print("SnapReel request failed:", type(error).__name__, getattr(error, "code", ""), flush=True)
             time.sleep(30)
 
 

@@ -3,8 +3,8 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 
 export const metadata: Metadata = {
-  title: 'Términos de uso · VideoVault',
-  description: 'Condiciones y límites de uso de VideoVault.',
+  title: 'Términos de uso · SnapReel',
+  description: 'Condiciones y límites de uso de SnapReel.',
   alternates: { canonical: '/terminos' },
 };
 
@@ -52,7 +52,7 @@ export default function Page() {
 
           <h2>Relación con Instagram</h2>
           <p>
-            VideoVault no está asociado, patrocinado ni respaldado por Instagram ni por Meta. Las
+            SnapReel no está asociado, patrocinado ni respaldado por Instagram ni por Meta. Las
             marcas mencionadas pertenecen a sus titulares.
           </p>
         </div>

@@ -53,7 +53,7 @@ export async function GET(request:Request){
   const originalFilename=original&&namedDownload(original,type);
   let basename=new URL(response.url||url).pathname.split('/').pop();
   try { if(basename)basename=decodeURIComponent(basename); } catch { /* Keep the encoded name. */ }
-  const filename=namedDownload(originalFilename||title||readableFilename(basename)||'VideoVault',type);
+  const filename=namedDownload(originalFilename||title||readableFilename(basename)||'SnapReel',type);
   const customMetadata={filename,...(originalFilename?{originalFilename}:{})};
   if(type.startsWith('image/')){
    const data=await readImage(response);

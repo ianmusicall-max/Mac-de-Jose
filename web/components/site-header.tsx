@@ -5,11 +5,11 @@ export function SiteHeader({ current }: { current: string }) {
   return (
     <header className="site-header">
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Keep site navigation independent of client routing. */}
-      <a className="brand" href="/" aria-label="VideoVault, inicio">
+      <a className="brand" href="/" aria-label="SnapReel, inicio">
         <span className="brand-icon">
           <ArrowDownToLine size={22} />
         </span>
-        VideoVault
+        SnapReel
         <span className="beta">WEB</span>
       </a>
 

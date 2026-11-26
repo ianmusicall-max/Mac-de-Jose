@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-const title = 'VideoVault · Instagram, TikTok, Facebook y YouTube';
-const description = 'Elige Instagram, TikTok, Facebook o YouTube para descargar vídeos, audio o fotos con VideoVault.';
+const title = 'SnapReel · Instagram, TikTok, Facebook y YouTube';
+const description = 'Elige Instagram, TikTok, Facebook o YouTube para descargar vídeos, audio o fotos con SnapReel.';
 
 export const metadata: Metadata = {
   title: { default: title, template: '%s' },
   description,
-  applicationName: 'VideoVault',
+  applicationName: 'SnapReel',
   icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
   openGraph: {
     type: 'website',
-    siteName: 'VideoVault',
+    siteName: 'SnapReel',
     title,
     description,
     locale: 'es_ES',

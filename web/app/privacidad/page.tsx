@@ -3,8 +3,8 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 
 export const metadata: Metadata = {
-  title: 'Privacidad · VideoVault',
-  description: 'Qué datos trata VideoVault y qué no guarda.',
+  title: 'Privacidad · SnapReel',
+  description: 'Qué datos trata SnapReel y qué no guarda.',
   alternates: { canonical: '/privacidad' },
 };
 

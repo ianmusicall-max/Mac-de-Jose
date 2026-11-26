@@ -15,7 +15,7 @@ export const instagramContext=new InstagramContext(storage);
 export const sharedBackoff=new SharedBackoff(storage);
 export function storedHeaders(object:R2Object,title?:string|null):Headers {
  const type=object.httpMetadata?.contentType||'application/octet-stream';
- const name=namedDownload(object.customMetadata?.originalFilename || title || readableFilename(object.customMetadata?.filename) || 'VideoVault',type);
+ const name=namedDownload(object.customMetadata?.originalFilename || title || readableFilename(object.customMetadata?.filename) || 'SnapReel',type);
  return new Headers({'Content-Type':type,'Content-Length':String(object.size),'Content-Disposition':attachment(name),'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});
 }
 export function storedResponse(object:R2ObjectBody,title?:string|null):Response {

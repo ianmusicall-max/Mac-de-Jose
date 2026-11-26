@@ -1,0 +1,24 @@
+[Unit]
+Description=SnapReel YouTube download agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=snapreel-browser
+Group=snapreel-browser
+Environment=HOME=/var/lib/snapreel-browser
+Environment=SNAPREEL_FIREFOX_PROFILE=/var/lib/snapreel-browser/profile
+EnvironmentFile=/etc/snapreel/youtube-agent.env
+ExecStart=/usr/bin/python3 /opt/snapreel/youtube-agent/agent.py
+Restart=on-failure
+RestartSec=15
+UMask=0077
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/snapreel-browser
+
+[Install]
+WantedBy=multi-user.target

@@ -32,7 +32,7 @@ export function VideoDownload({ href, children }: { href: string; children?: Rea
       }
 
       const blob = await response.blob();
-      const name = dispositionFilename(response.headers.get('content-disposition')) ?? namedDownload('VideoVault', type);
+      const name = dispositionFilename(response.headers.get('content-disposition')) ?? namedDownload('SnapReel', type);
       const video = new File([blob], name, { type });
       if (!video.size || !navigator.canShare({ files: [video] })) {
         setFallback(true);

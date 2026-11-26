@@ -42,5 +42,7 @@ una herramienta es añadir una entrada, no escribir otra página.
 
 CI (`.github/workflows/web.yml`) ejecuta tests, tipos, lint y build, y despliega
 el Worker con `wrangler deploy` cuando existen los secretos `CLOUDFLARE_API_TOKEN`
-y `CLOUDFLARE_ACCOUNT_ID`. El Worker se llama `videovault` y necesita el bucket
-R2 `videovault-media`: sin él `/api/resolve` falla en cada petición.
+y `CLOUDFLARE_ACCOUNT_ID`. El Worker se llama `snapreel` (nombre tomado de
+`web/package.json`) y necesita el bucket R2 `videovault-media` (el bucket
+conserva su nombre original, no afecta a la marca): sin él `/api/resolve`
+falla en cada petición.

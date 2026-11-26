@@ -41,8 +41,8 @@ export async function GET(request:Request){
    data=await boundedVideo(response);
   }
   const audio=extractM4a(data);
-  if(!source)await bucket().put('files/'+id,data,{httpMetadata:{contentType:'video/mp4'},customMetadata:{filename:'videovault.mp4',...(originalFilename?{originalFilename}:{})}});
-  await bucket().put(audioKey,audio,{httpMetadata:{contentType:'audio/mp4'},customMetadata:{filename:'videovault-audio.m4a',...(originalFilename?{originalFilename}:{})}});
+  if(!source)await bucket().put('files/'+id,data,{httpMetadata:{contentType:'video/mp4'},customMetadata:{filename:'snapreel.mp4',...(originalFilename?{originalFilename}:{})}});
+  await bucket().put(audioKey,audio,{httpMetadata:{contentType:'audio/mp4'},customMetadata:{filename:'snapreel-audio.m4a',...(originalFilename?{originalFilename}:{})}});
   const result=await bucket().get(audioKey);if(!result)throw new Error('No se pudo guardar la pista de audio.');
   return storedResponse(result,title);
  }catch(e){return new Response(e instanceof Error?e.message:'No se pudo extraer el audio.',{status:e instanceof OriginRateLimitError?429:422,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store',...(e instanceof OriginRateLimitError?{'Retry-After':String(e.retryAfter)}:{})}});}

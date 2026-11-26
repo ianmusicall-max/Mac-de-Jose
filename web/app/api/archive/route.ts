@@ -13,7 +13,7 @@ export async function POST(request:Request){
   const assetId=await digest(source+':'+await crypto.subtle.digest('SHA-256',data).then(b=>Array.from(new Uint8Array(b),n=>n.toString(16).padStart(2,'0')).join('')));
   const extensions:Record<string,string>={'video/mp4':'mp4','video/webm':'webm','audio/mpeg':'mp3','audio/mp4':'m4a','image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
   const extension=extensions[type.split(';')[0]]||'bin';
-  await bucket().put('files/'+assetId,data,{httpMetadata:{contentType:type},customMetadata:{filename:'videovault.'+extension}});
+  await bucket().put('files/'+assetId,data,{httpMetadata:{contentType:type},customMetadata:{filename:'snapreel.'+extension}});
   const result=await archive.save(source,{title:'Archivo guardado',items:[{url:source,assetId,kind:mediaKind,title:'Archivo guardado'}]});
   return Response.json({...result,fromArchive:true});
  }catch(e){return Response.json({error:e instanceof Error?e.message:'No se pudo importar el archivo.'},{status:400});}

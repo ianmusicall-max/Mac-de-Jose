@@ -1,4 +1,4 @@
-# VideoVault Web
+# SnapReel Web
 
 Versión web con React/Vinext y un servicio compatible con Cloudflare Workers. Acepta enlaces HTTPS públicos, detecta archivos por Content-Type y extrae medios publicados en HTML (OpenGraph, video/audio/source y contentUrl/video_url). Las descargas pasan por un endpoint que valida el destino y devuelve el archivo como adjunto sin almacenarlo en el servidor.
 
@@ -32,7 +32,7 @@ en el resumen del run, pero no publica.
 6. Haz un push que toque `web/`, o lanza el workflow a mano desde la pestaña
    Actions.
 
-Queda publicado en `https://videovault.<tu-subdominio>.workers.dev`. Los nombres
+Queda publicado en `https://snapreel.<tu-subdominio>.workers.dev`. Los nombres
 exactos de las pantallas del panel de Cloudflare cambian de vez en cuando; los
 permisos que hacen falta son los de arriba.
 
