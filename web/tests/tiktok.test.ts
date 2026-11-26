@@ -93,3 +93,15 @@ test('keeps the playback Referer through a TikTok CDN redirect only', async cont
   const response = await remote(playback, { headers: { ...tikTokMediaHeaders(new URL(playback)), Authorization: 'test' } }, 1_000, undefined, tikTokMediaHeaders);
   assert.equal(response.headers.get('content-type'), 'video/mp4');
 });
+
+
+test('checks the official playback link even when it comes after the first four CDN URLs', async () => {
+  const playback = 'https://www.tiktok.com/aweme/v1/play/?video_id=test';
+  const urls = Array.from({ length: 10 }, (_, index) => `https://video.example.com/${index}.mp4`);
+  const video = { bitrateInfo: [{ PlayAddr: { UrlKey: 'video_h264_720p', UrlList: [...urls, playback] } }] };
+  const result = await resolveTikTok(page, html({ ...item, video }), async candidate => {
+    assert.equal(candidate, playback);
+    return new Response(null, { headers: { 'Content-Type': 'video/mp4' } });
+  });
+  assert.equal(result.items[0]?.url, playback);
+});

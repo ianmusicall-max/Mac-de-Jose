@@ -85,7 +85,7 @@ export async function resolveTikTok(
   const candidates = new Set([
     ...addressUrls(item.video.downloadAddr),
     ...addressUrls(item.video.download?.url),
-    ...variantUrls.slice(0, 4),
+    ...variantUrls,
     ...[item.video.playAddr].flat().flatMap(addressUrls),
     ...addressUrls(item.video.PlayAddrStruct),
   ]);
