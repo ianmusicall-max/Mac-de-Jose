@@ -4,7 +4,7 @@ import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
 import { resolveInstagram, instagramPost } from '@/lib/instagram';
 import { isTikTok, resolveTikTok, tikTokVideoId } from '@/lib/tiktok';
-import { FACEBOOK_UNAVAILABLE, isFacebook, resolveFacebook } from '@/lib/facebook';
+import { isFacebook, resolveFacebookPage } from '@/lib/facebook';
 import { resolveYouTube, youtubeVideoId } from '@/lib/youtube';
 import { ResolutionService } from '@/lib/resolution-service';
 import {archive,sharedBackoff,instagramContext} from '@/lib/server-storage';
@@ -17,6 +17,10 @@ async function fetchOrigin(stage:'page'|'query'|'embed'|'video',url:string,init?
 }
 async function resolve(url: string) {
   const source = new URL(url);
+  if (isFacebook(source)) {
+    return resolveFacebookPage(source, (target, stage) => fetchOrigin(stage, target), candidate =>
+      fetchOrigin('video', candidate, { headers: { Range: 'bytes=0-0' } }));
+  }
   const tikTok = isTikTok(source);
   const youtube = youtubeVideoId(source);
   const post=instagramPost(url);
@@ -31,15 +35,6 @@ async function resolve(url: string) {
     }
     return resolveTikTok(page, await boundedText(response), candidate =>
       fetchOrigin('video', candidate, {headers:{Range:'bytes=0-0'}}));
-  }
-  if (isFacebook(source)) {
-    const page = new URL(response.url || url);
-    if (!isFacebook(page) || !type.toLowerCase().includes('text/html')) {
-      await response.body?.cancel();
-      throw new Error(FACEBOOK_UNAVAILABLE);
-    }
-    return resolveFacebook(page, await boundedText(response), candidate =>
-      fetchOrigin('video', candidate, { headers: { Range: 'bytes=0-0' } }));
   }
   if (youtube) {
     if (!type.includes('text/html')) {

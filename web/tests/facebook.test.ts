@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { isFacebook, resolveFacebook } from '../lib/facebook.ts';
+import { isFacebook, resolveFacebook, resolveFacebookPage } from '../lib/facebook.ts';
 
 const page = new URL('https://www.facebook.com/reel/123');
 const hd = 'https://video.xx.fbcdn.net/hd.mp4?a=1&b=2';
@@ -38,7 +38,7 @@ test('returns a downloadable cover alongside video and excludes generic Facebook
     return new Response(null, { headers: { 'Content-Type': url === cover ? 'image/jpeg' : 'video/mp4' } });
   });
   assert.deepEqual(result.items.map(item => [item.kind, item.isPreview]), [['video', undefined], ['image', true]]);
-  assert.equal(result.facebookImagesChecked, true);
+  assert.equal(result.facebookEmbedChecked, true);
 });
 
 test('resolves a public photo with no video', async () => {
@@ -47,4 +47,36 @@ test('resolves a public photo with no video', async () => {
   const result = await resolveFacebook(photo, html, async () =>
     new Response(null, { headers: { 'Content-Type': 'image/jpeg' } }));
   assert.deepEqual(result.items.map(item => [item.kind, item.isPreview]), [['image', false]]);
+});
+
+
+test('checks the public embedded player when a reel page only exposes its cover', async () => {
+  const cover = 'https://scontent.xx.fbcdn.net/reel.jpg';
+  const stages: string[] = [];
+  const result = await resolveFacebookPage(page, async (url, stage) => {
+    stages.push(stage);
+    if (stage === 'embed') {
+      const endpoint = new URL(url);
+      assert.equal(endpoint.origin + endpoint.pathname, 'https://www.facebook.com/plugins/video.php');
+      assert.equal(endpoint.searchParams.get('href'), page.href);
+    }
+    const html = stage === 'page'
+      ? `<title>Reel público</title><meta property="og:image" content="${cover}">`
+      : `<script>{"hd_src":"${hd}","sd_src":"${sd}"}</script>`;
+    return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+  }, async url => new Response(null, {
+    headers: { 'Content-Type': url === cover ? 'image/jpeg' : 'video/mp4' },
+  }));
+  assert.deepEqual(stages, ['page', 'embed']);
+  assert.deepEqual(result.items.map(item => [item.kind, item.quality, item.title]), [
+    ['video', 'HD', 'Reel público'], ['video', 'SD', 'Reel público'], ['image', undefined, 'Reel público'],
+  ]);
+});
+
+test('recovers the video from the public player when the reel permalink fails', async () => {
+  const result = await resolveFacebookPage(page, async (_url, stage) => {
+    if (stage === 'page') throw new Error('El sitio respondió HTTP 400.');
+    return new Response(`<script>{"progressive_url":"${sd}"}</script>`, { headers: { 'Content-Type': 'text/html' } });
+  }, async () => new Response(null, { headers: { 'Content-Type': 'video/mp4' } }));
+  assert.deepEqual(result.items.map(item => item.url), [sd]);
 });

@@ -30,9 +30,9 @@ export class ResolutionService {
       const saved=await this.archive.find(key);
       const needsImages=images&&saved&&key.startsWith('https://www.instagram.com/p/')&&
         (!saved.items.some(item=>item.kind==='image')||saved.albumSize===undefined);
-      const needsFacebookImages=saved?.items.length&&isFacebook(new URL(key))&&!saved.facebookImagesChecked;
-      if(!refresh&&!needsImages&&!needsFacebookImages&&saved?.items.length)return saved;
-      if(refresh||needsImages||needsFacebookImages)this.cache.invalidate(key);
+      const needsFacebookVideo=saved?.items.length&&isFacebook(new URL(key))&&!saved.facebookEmbedChecked;
+      if(!refresh&&!needsImages&&!needsFacebookVideo&&saved?.items.length)return saved;
+      if(refresh||needsImages||needsFacebookVideo)this.cache.invalidate(key);
       try {
         const result=await this.cache.get(key,async()=>{
           const loaded=await this.load(key);
@@ -45,7 +45,7 @@ export class ResolutionService {
         if(result.retryAfter||!result.items.length)this.cache.invalidate(key);
         return result;
       } catch(error) {
-        if(needsFacebookImages&&saved)return {
+        if(needsFacebookVideo&&saved)return {
           ...saved,
           ...(error instanceof OriginRateLimitError?{retryAfter:error.retryAfter}:{}),
         };

@@ -1,5 +1,5 @@
 import type { ResolvedMedia } from './instagram.ts';
-import { extract, publicUrl, kind, type Media } from './media.ts';
+import { boundedText, extract, publicUrl, kind, type Media } from './media.ts';
 import { OriginRateLimitError } from './rate-limit.ts';
 
 export const FACEBOOK_UNAVAILABLE = 'Facebook no ofreció un MP4 público para este enlace. Comprueba que el vídeo se abre sin iniciar sesión.';
@@ -22,6 +22,57 @@ function facebookCdn(raw: string): string | undefined {
   }
 }
 
+export async function resolveFacebookPage(
+  source: URL,
+  load: (url: string, stage: 'page' | 'embed') => Promise<Response>,
+  probe: (url: string) => Promise<Response>,
+): Promise<ResolvedMedia> {
+  let page = source;
+  let original: ResolvedMedia | undefined;
+  try {
+    const response = await load(source.href, 'page');
+    const target = new URL(response.url || source.href);
+    if (!isFacebook(target) || !response.headers.get('content-type')?.toLowerCase().includes('text/html')) {
+      await response.body?.cancel();
+      throw new Error(FACEBOOK_UNAVAILABLE);
+    }
+    if (!target.pathname.startsWith('/login')) page = target;
+    original = await resolveFacebook(page, await boundedText(response), probe);
+    if (original.items.some(item => item.kind === 'video') || isFacebookPhoto(page)) return original;
+  } catch (error) {
+    if (error instanceof OriginRateLimitError) throw error;
+  }
+
+  if (!isFacebookPhoto(page)) {
+    try {
+      const embed = new URL('https://www.facebook.com/plugins/video.php');
+      embed.searchParams.set('href', page.href);
+      const response = await load(embed.href, 'embed');
+      const target = new URL(response.url || embed.href);
+      if (!isFacebook(target) || !response.headers.get('content-type')?.toLowerCase().includes('text/html')) {
+        await response.body?.cancel();
+        throw new Error(FACEBOOK_UNAVAILABLE);
+      }
+      const embedded = await resolveFacebook(page, await boundedText(response), probe);
+      if (!original) return embedded;
+      const title = original.title;
+      const known = new Set(original.items.map(item => item.url));
+      const items = [
+        ...embedded.items.filter(item => !known.has(item.url)).map(item => ({ ...item, title })),
+        ...original.items,
+      ];
+      return { title, items, facebookEmbedChecked: true };
+    } catch (error) {
+      if (error instanceof OriginRateLimitError) {
+        if (original) return { ...original, retryAfter: error.retryAfter };
+        throw error;
+      }
+    }
+  }
+  if (original) return original;
+  throw new Error(FACEBOOK_UNAVAILABLE);
+}
+
 export async function resolveFacebook(
   page: URL,
   html: string,
@@ -32,6 +83,7 @@ export async function resolveFacebook(
   for (const [fields, quality] of [
     ['browser_native_hd_url|playable_url_quality_hd|hd_src(?:_no_ratelimit)?', 'HD'],
     ['browser_native_sd_url|playable_url|sd_src(?:_no_ratelimit)?', 'SD'],
+    ['progressive_url', undefined],
   ] as const) {
     const pattern = new RegExp(`"(?:${fields})"\\s*:\\s*("(?:[^"\\\\]|\\\\.)*")`, 'g');
     for (const [, encoded] of html.matchAll(pattern)) {
@@ -41,7 +93,7 @@ export async function resolveFacebook(
       } catch {
         // Ignore an invalid JSON string.
       }
-      if (candidates.size >= (quality === 'HD' ? 3 : 6)) break;
+      if (candidates.size >= (quality === 'HD' ? 3 : quality === 'SD' ? 6 : 8)) break;
     }
   }
   for (const item of metadata.filter(item => item.kind === 'video').slice(0, 2)) {
@@ -86,5 +138,5 @@ export async function resolveFacebook(
   }
 
   if (!items.size && !images.length) throw new Error(FACEBOOK_UNAVAILABLE);
-  return { title, items: [...items.values(), ...images], facebookImagesChecked: true };
+  return { title, items: [...items.values(), ...images], facebookEmbedChecked: true };
 }

@@ -69,11 +69,11 @@ test('cooldowns survive reloads, expire and apply to canonical Instagram aliases
 });
 
 
-test('older Facebook results check for images once while preserving offline access', async () => {
+test('older Facebook results check the updated resolver once while preserving offline access', async () => {
   const url = 'https://www.facebook.com/reel/123';
   const updated: ResolvedMedia = {
     ...media,
-    facebookImagesChecked: true,
+    facebookEmbedChecked: true,
     items: [...media.items, { url: 'https://scontent.xx.fbcdn.net/cover.jpg', kind: 'image', title: 'Cover' }],
   };
   let saved = media;
