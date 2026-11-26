@@ -66,7 +66,52 @@
 
 .site-nav-link.current {
   background: var(--green-100);
-  color: var(--green-800);
+  color: var(--text-brand);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.locale-switch {
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 2px;
+}
+
+.locale-option {
+  padding: 4px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 5px;
+  color: var(--ink-mute);
+  background: none;
+  border: 0;
+}
+
+.locale-option.current {
+  background: var(--green-100);
+  color: var(--text-brand);
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  background: var(--surface);
+}
+
+.theme-toggle:hover {
+  background: var(--surface-selected);
 }
 
 .page {
@@ -108,7 +153,7 @@
 }
 
 .footer-grid a:hover {
-  color: var(--green-800);
+  color: var(--text-brand);
 }
 
 .footer-note p {

@@ -8,9 +8,9 @@ import { AlbumDownloadButton } from '@/components/image-download';
 import { ResultCard } from '@/components/result-card';
 import { cooldownOrigin as originOf, readCooldown } from '@/lib/cooldown';
 import { sourceKey } from '@/lib/archive';
+import { useLocale } from '@/lib/i18n/locale-context';
+import { strings } from '@/lib/i18n/strings';
 
-const KIND_LABEL = { video: 'vídeo', audio: 'audio', image: 'imagen' } as const;
-const KIND_TITLE = { video: 'Vídeos', audio: 'Audios', image: 'Imágenes' } as const;
 const KIND_ICON = { video: Film, audio: Music2, image: ImageIcon } as const;
 const KINDS = ['video', 'audio', 'image'] as const;
 const HISTORY_KEY = 'snapreel-links';
@@ -48,6 +48,10 @@ export function Downloader({
   platform?: Tool['platform'];
   formats?: Tool['formats'];
 }) {
+  const { locale } = useLocale();
+  const t = strings[locale].downloader;
+  const selectionText = strings[locale].selection;
+
   const [url, setUrl] = useState('');
   const [selected, setSelected] = useState<Media['kind']>(defaultKind);
   const [busy, setBusy] = useState(false);
@@ -93,7 +97,7 @@ export function Downloader({
     searched && !busy && !error
       ? selected === 'video' && sourceWarning && !visible.length
         ? sourceWarning
-        : selectionMessage(items, selected)
+        : selectionMessage(items, selected, selectionText)
       : null;
 
   function remember(link: string) {
@@ -138,7 +142,7 @@ export function Downloader({
         response = await request();
         data = (await response.json()) as ResolveResponse;
       }
-      if (data.pending) throw new Error('El vídeo sigue en preparación. Vuelve a consultarlo en unos segundos.');
+      if (data.pending) throw new Error(t.pending);
 
       if (data.retryAfter || response.status === 429) {
         const current = Date.now();
@@ -148,7 +152,7 @@ export function Downloader({
         try { localStorage.setItem('snapreel-cooldown', JSON.stringify(nextCooldown)); }
         catch { /* The in-memory wait remains available. */ }
       }
-      if (!response.ok) throw new Error(data.error || 'No se pudo analizar el enlace.');
+      if (!response.ok) throw new Error(data.error || t.parseError);
       setResultSource(sourceKey(link));
 
       setItems(data.items);
@@ -159,7 +163,7 @@ export function Downloader({
       setSearched(true);
       remember(link);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'No se pudo conectar. Inténtalo de nuevo.');
+      setError(cause instanceof Error ? cause.message : t.connectError);
     } finally {
       setBusy(false);
     }
@@ -177,7 +181,7 @@ export function Downloader({
   return (
     <>
       <form onSubmit={detect} className="input-panel">
-        <label htmlFor="url">Pega el enlace de la publicación</label>
+        <label htmlFor="url">{t.urlLabel}</label>
 
         <div className="input-row">
           <Link2 size={20} />
@@ -193,11 +197,11 @@ export function Downloader({
           <button disabled={busy} type="submit">
             {busy ? (
               <>
-                <LoaderCircle className="spin" size={18} /> Buscando…
+                <LoaderCircle className="spin" size={18} /> {t.searching}
               </>
             ) : (
               <>
-                Buscar {KIND_LABEL[selected]} <ArrowUpRight size={18} />
+                {t.search(t.kindLabel[selected])} <ArrowUpRight size={18} />
               </>
             )}
           </button>
@@ -205,7 +209,7 @@ export function Downloader({
 
         {formats.length > 1 && (
           <fieldset className="formats format-options">
-            <legend>Formato de descarga</legend>
+            <legend>{t.formatLegend}</legend>
             {formats.map(option => {
               const Icon = KIND_ICON[option];
               return (
@@ -221,7 +225,7 @@ export function Downloader({
                     onChange={() => setSelected(option)}
                   />
                   <Icon size={15} />
-                  {KIND_TITLE[option].slice(0, -1)}
+                  {t.kindSingular[option]}
                   {searched && (
                     <span className="format-count">
                       {options.filter(item => item.kind === option).length}
@@ -235,9 +239,7 @@ export function Downloader({
 
         {(formats.length > 1 || waiting > 0) && (
           <small className="format-help">
-            {waiting > 0
-              ? `El origen está en espera (${waiting}s). Los archivos guardados siguen disponibles.`
-              : 'Cambiar de formato muestra los resultados de la misma búsqueda.'}
+            {waiting > 0 ? t.waitingHelp(waiting) : t.switchFormatHelp}
           </small>
         )}
       </form>
@@ -245,7 +247,7 @@ export function Downloader({
       {selected === 'image' && searched && (
         <div className="image-toolbar">
           <button type="button" className="text-button" disabled={busy} onClick={event => detect(event, true)}>
-            {platform === 'facebook' ? 'Actualizar imágenes' : 'Actualizar álbum'}
+            {platform === 'facebook' ? t.refreshImages : t.refreshAlbum}
           </button>
           {visible.length > 1 && <AlbumDownloadButton items={visible} />}
         </div>
@@ -259,7 +261,7 @@ export function Downloader({
         )}
         {fromArchive && (
           <p className="notice" role="status">
-            Se recuperaron los archivos guardados sin consultar el origen.
+            {t.fromArchive}
           </p>
         )}
         {selected === 'image' && albumWarning && (
@@ -279,8 +281,8 @@ export function Downloader({
         {visible.length > 0 && (
           <section className="results">
             <div className="section-heading">
-              <h2>{KIND_TITLE[selected]} disponibles</h2>
-              <span>{visible.length} encontrados</span>
+              <h2>{t.available(t.kindTitle[selected])}</h2>
+              <span>{t.found(visible.length)}</span>
             </div>
             <p className="result-title">{title}</p>
             {visible.map((item, index) => (
@@ -305,10 +307,10 @@ export function Downloader({
         <section className="recent">
           <div className="section-heading">
             <h2>
-              <Clock3 size={17} /> Enlaces recientes
+              <Clock3 size={17} /> {t.recentLinks}
             </h2>
             <button className="text-button" onClick={clearHistory}>
-              Borrar historial
+              {t.clearHistory}
             </button>
           </div>
           {history.map(link => (

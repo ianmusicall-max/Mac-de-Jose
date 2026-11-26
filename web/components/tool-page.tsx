@@ -1,3 +1,4 @@
+'use client';
 import type { Tool } from '@/lib/tools';
 import { Downloader } from '@/components/downloader';
 import { SiteHeader } from '@/components/site-header';
@@ -6,12 +7,18 @@ import { HowItWorks } from '@/components/sections/how-it-works';
 import { Benefits } from '@/components/sections/benefits';
 import { Faq } from '@/components/sections/faq';
 import { ToolLinks } from '@/components/sections/tool-links';
+import { useLocale } from '@/lib/i18n/locale-context';
+import { strings } from '@/lib/i18n/strings';
+import { pick } from '@/lib/i18n/locale';
 
 /**
  * The shape every tool page shares: headline, the downloader itself, then the
  * supporting sections. Each route supplies only its entry from the catalogue.
  */
 export function ToolPage({ tool }: { tool: Tool }) {
+  const { locale } = useLocale();
+  const t = strings[locale];
+
   return (
     <>
       <SiteHeader current={tool.path} />
@@ -19,14 +26,14 @@ export function ToolPage({ tool }: { tool: Tool }) {
       <main className="page">
         <section className="hero">
           <span className="eyebrow">
-            <span /> DESCARGADOR DE {tool.platform?.toUpperCase() ?? 'INSTAGRAM'}
+            <span /> {t.toolPage.downloaderOf(tool.platform?.toUpperCase() ?? 'INSTAGRAM')}
           </span>
           <h1>
-            {tool.heading}
+            {pick(tool.heading, locale)}
             <br />
-            <span>{tool.headingAccent}</span>
+            <span>{pick(tool.headingAccent, locale)}</span>
           </h1>
-          <p className="hero-intro">{tool.intro}</p>
+          <p className="hero-intro">{pick(tool.intro, locale)}</p>
         </section>
 
         <Downloader defaultKind={tool.kind} placeholder={tool.placeholder} platform={tool.platform} formats={tool.formats} />
@@ -35,7 +42,7 @@ export function ToolPage({ tool }: { tool: Tool }) {
         {!tool.platform && <Benefits />}
         {tool.platform === 'youtube' && (
           <p className="hero-intro">
-            Si el vídeo es tuyo, también puedes descargarlo desde{' '}
+            {t.toolPage.youtubeStudioNote}{' '}
             <a className="text-button" href="https://studio.youtube.com/">YouTube Studio</a>.
           </p>
         )}

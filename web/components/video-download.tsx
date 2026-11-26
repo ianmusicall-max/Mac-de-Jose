@@ -3,8 +3,12 @@
 import { useState, type ReactNode } from 'react';
 import { ArrowDownToLine, Share } from 'lucide-react';
 import { dispositionFilename, namedDownload } from '@/lib/download-name';
+import { useLocale } from '@/lib/i18n/locale-context';
+import { strings } from '@/lib/i18n/strings';
 
 export function VideoDownload({ href, children }: { href: string; children?: ReactNode }) {
+  const { locale } = useLocale();
+  const t = strings[locale].videoDownload;
   const [file, setFile] = useState<File>();
   const [busy, setBusy] = useState(false);
   const [fallback, setFallback] = useState(false);
@@ -52,18 +56,18 @@ export function VideoDownload({ href, children }: { href: string; children?: Rea
     <div className="video-download">
       <div className="video-download-actions">
         <a className="download" href={href}>
-          <ArrowDownToLine size={17} /> Descargar vídeo
+          <ArrowDownToLine size={17} /> {t.downloadVideo}
         </a>
         <button className="download" type="button" disabled={busy} onClick={saveToPhotos}>
-          <Share size={17} /> {busy && !file ? 'Preparando vídeo…' : file ? 'Compartir vídeo' : 'Guardar en Fotos'}
+          <Share size={17} /> {busy && !file ? t.preparing : file ? t.shareVideo : t.saveToPhotos}
         </button>
         {children}
       </div>
       <div aria-live="polite">
         {fallback ? (
-          <small>Descarga el vídeo y ábrelo en Archivos. Toca Compartir y elige Guardar vídeo si aparece la opción.</small>
+          <small>{t.fallbackHelp}</small>
         ) : file ? (
-          <small>Toca Compartir vídeo y elige Guardar vídeo si aparece la opción.</small>
+          <small>{t.readyHelp}</small>
         ) : null}
       </div>
     </div>

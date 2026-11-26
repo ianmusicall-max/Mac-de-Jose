@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import { LocaleProvider } from '@/lib/i18n/locale-context';
+import { ThemeProvider } from '@/lib/theme-context';
 import './globals.css';
 
-const title = 'SnapReel · Instagram, TikTok, Facebook y YouTube';
-const description = 'Elige Instagram, TikTok, Facebook o YouTube para descargar vídeos, audio o fotos con SnapReel.';
+const title = 'SnapReel · Instagram, TikTok, Facebook and YouTube';
+const description = 'Choose Instagram, TikTok, Facebook or YouTube to download videos, audio or photos with SnapReel.';
 
 export const metadata: Metadata = {
   title: { default: title, template: '%s' },
@@ -14,14 +16,18 @@ export const metadata: Metadata = {
     siteName: 'SnapReel',
     title,
     description,
-    locale: 'es_ES',
+    locale: 'en_US',
   },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es">
-      <body className="antialiased">{children}</body>
+    <html lang="en">
+      <body className="antialiased">
+        <ThemeProvider>
+          <LocaleProvider>{children}</LocaleProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

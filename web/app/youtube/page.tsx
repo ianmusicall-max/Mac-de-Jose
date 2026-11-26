@@ -5,8 +5,8 @@ import { TOOLS } from '@/lib/tools';
 const tool = TOOLS.find(entry => entry.path === '/youtube')!;
 
 export const metadata: Metadata = {
-  title: tool.title,
-  description: tool.description,
+  title: tool.title.en,
+  description: tool.description.en,
   alternates: { canonical: tool.path },
 };
 

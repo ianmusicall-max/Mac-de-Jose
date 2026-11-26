@@ -11,9 +11,16 @@
   --ink: #22332d;
   --ink-soft: #5d6b60;
   --ink-mute: #7f8b80;
+  --ink-faint: #94a08f;
+  --ink-accent: #5c6e55;
+  --text-brand: var(--green-800);
   --line: #e0e6df;
   --line-soft: #eef1ec;
   --surface: #ffffff;
+  --surface-soft: #fafbf9;
+  --surface-selected: #eaf2e5;
+  --border-accent: #6f8c62;
+  --shadow-color: #283c2310;
 
   --warn-ink: #8a4c2d;
   --warn-line: #e6cdb8;
@@ -26,6 +33,60 @@
   font-family: Arial, Helvetica, sans-serif;
   color: var(--ink);
   background: var(--green-050);
+}
+
+/* Dark palette, applied either by OS preference or by the manual toggle
+   (`data-theme` on <html>, set and persisted in lib/i18n/locale-context.tsx's
+   sibling theme context). The brand greens used as solid button/badge
+   backgrounds (--green-700/800/900) are intentionally left unchanged: they
+   stay high-contrast with the white text/icons painted on top of them in
+   both themes. Only neutral surface, border and body-text tokens invert. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --green-050: #16211b;
+    --green-100: #1e2e24;
+
+    --ink: #e9efe9;
+    --ink-soft: #b7c3b9;
+    --ink-mute: #8fa092;
+    --ink-faint: #76897b;
+    --ink-accent: #9fd1ab;
+    --text-brand: #8fd4a8;
+    --line: #2d3f33;
+    --line-soft: #253329;
+    --surface: #1b2822;
+    --surface-soft: #24352b;
+    --surface-selected: #26402f;
+    --border-accent: #4f7a5d;
+    --shadow-color: #00000055;
+
+    --warn-ink: #f2b68e;
+    --warn-line: #6b4327;
+    --warn-bg: #2e2016;
+  }
+}
+
+:root[data-theme='dark'] {
+  --green-050: #16211b;
+  --green-100: #1e2e24;
+
+  --ink: #e9efe9;
+  --ink-soft: #b7c3b9;
+  --ink-mute: #8fa092;
+  --ink-faint: #76897b;
+  --ink-accent: #9fd1ab;
+  --text-brand: #8fd4a8;
+  --line: #2d3f33;
+  --line-soft: #253329;
+  --surface: #1b2822;
+  --surface-soft: #24352b;
+  --surface-selected: #26402f;
+  --border-accent: #4f7a5d;
+  --shadow-color: #00000055;
+
+  --warn-ink: #f2b68e;
+  --warn-line: #6b4327;
+  --warn-bg: #2e2016;
 }
 
 * {

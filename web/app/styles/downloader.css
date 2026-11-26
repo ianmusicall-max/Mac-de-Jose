@@ -1,10 +1,10 @@
 /* The link form, the format picker and the results it produces. */
 .input-panel {
-  border: 1px solid #dce5d9;
+  border: 1px solid var(--line);
   background: var(--surface);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: 0 12px 35px #283c2310;
+  box-shadow: 0 12px 35px var(--shadow-color);
 }
 
 .input-panel label {
@@ -18,14 +18,14 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  border: 1px solid #dae1d6;
-  background: #fafbf9;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
   padding: 7px 7px 7px 15px;
   border-radius: 9px;
 }
 
 .input-row > svg {
-  color: #94a08f;
+  color: var(--ink-faint);
   flex-shrink: 0;
 }
 
@@ -41,7 +41,7 @@ input {
   font: inherit;
   font-size: 13px;
   padding: 9px 0;
-  color: #243c2c;
+  color: var(--ink);
 }
 
 input:focus {
@@ -49,7 +49,7 @@ input:focus {
 }
 
 input::placeholder {
-  color: #a2aa9f;
+  color: var(--ink-faint);
 }
 
 button[type='submit'] {
@@ -81,7 +81,7 @@ button:disabled {
   align-items: center;
   gap: 18px;
   margin-top: 17px;
-  color: #8a9587;
+  color: var(--ink-faint);
   font-size: 10px;
 }
 
@@ -95,7 +95,7 @@ button:disabled {
 .format-options legend {
   font-size: 11px;
   margin-bottom: 10px;
-  color: #66765e;
+  color: var(--ink-accent);
 }
 
 .input-panel .format-choice {
@@ -104,18 +104,18 @@ button:disabled {
   gap: 6px;
   margin: 0;
   padding: 9px 12px;
-  border: 1px solid #dce5d9;
+  border: 1px solid var(--line);
   border-radius: 8px;
   cursor: pointer;
-  color: #65765d;
+  color: var(--ink-accent);
   font-size: 12px;
   font-weight: 500;
 }
 
 .format-choice.selected {
-  background: #eaf2e5;
-  border-color: #6f8c62;
-  color: var(--green-800);
+  background: var(--surface-selected);
+  border-color: var(--border-accent);
+  color: var(--text-brand);
 }
 
 .format-choice input {
@@ -130,7 +130,7 @@ button:disabled {
 .format-count {
   font-size: 10px;
   padding: 1px 5px;
-  background: #dce8d4;
+  background: var(--surface-selected);
   border-radius: 4px;
 }
 
@@ -139,7 +139,7 @@ button:disabled {
   margin-top: 12px;
   font-size: 11px;
   line-height: 1.6;
-  color: #78896e;
+  color: var(--ink-accent);
 }
 
 /* Messages */
@@ -159,9 +159,9 @@ button:disabled {
 }
 
 .notice {
-  border: 1px solid #dce5d9;
-  background: #eef4e9;
-  color: #4d6543;
+  border: 1px solid var(--line);
+  background: var(--surface-selected);
+  color: var(--ink-accent);
 }
 
 /* Results */
@@ -187,7 +187,7 @@ button:disabled {
 .section-heading > span,
 .result-title {
   font-size: 11px;
-  color: #82907b;
+  color: var(--ink-faint);
 }
 
 .result {
@@ -196,14 +196,14 @@ button:disabled {
   gap: 15px;
   background: var(--surface);
   padding: 18px;
-  border: 1px solid #e1e6dd;
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   margin-top: 10px;
 }
 
 .file-icon {
-  background: #edf3e7;
-  color: #66805a;
+  background: var(--surface-selected);
+  color: var(--ink-accent);
   padding: 12px;
   border-radius: 10px;
 }
@@ -222,7 +222,7 @@ button:disabled {
 
 .result small {
   font-size: 10px;
-  color: #8a9584;
+  color: var(--ink-faint);
 }
 
 .download {
@@ -240,7 +240,7 @@ button:disabled {
 .text-button {
   background: none;
   border: 0;
-  color: #78896e;
+  color: var(--ink-accent);
   font-size: 10px;
 }
 
@@ -253,7 +253,7 @@ button:disabled {
   background: none;
   border: 0;
   border-bottom: 1px solid var(--line);
-  color: #85937c;
+  color: var(--ink-faint);
   font-size: 11px;
   text-align: left;
 }
@@ -299,8 +299,8 @@ button:disabled {
   height: 96px;
   flex-shrink: 0;
   object-fit: contain;
-  background: #eef2ea;
-  border: 1px solid #dce5d9;
+  background: var(--surface-selected);
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 

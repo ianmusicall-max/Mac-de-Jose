@@ -6,15 +6,15 @@ import { ImageDownloadButton, ImagePreview } from '@/components/image-download';
 import { mediaFileUrl } from '@/lib/album';
 import { VideoDownload } from '@/components/video-download';
 import { VideoPreview } from '@/components/video-preview';
-
-const KIND_LABEL = { video: 'vídeo', audio: 'audio', image: 'imagen' } as const;
+import { useLocale } from '@/lib/i18n/locale-context';
+import { strings } from '@/lib/i18n/strings';
 
 const KIND_ICON = { video: Film, audio: Music2, image: ImageIcon } as const;
 
-function describe(item: Media): string {
-  if (item.kind === 'video') return 'Vídeo';
-  if (item.kind === 'audio') return item.derivedFromVideo ? 'M4A · audio del vídeo' : 'Audio';
-  return item.isPreview ? 'Imagen de portada' : 'Imagen';
+function describe(item: Media, t: (typeof strings)['en']['resultCard']): string {
+  if (item.kind === 'video') return t.describe.video;
+  if (item.kind === 'audio') return item.derivedFromVideo ? t.describe.audioFromVideo : t.describe.audio;
+  return item.isPreview ? t.describe.coverImage : t.describe.image;
 }
 
 export function ResultCard({
@@ -28,6 +28,9 @@ export function ResultCard({
   position: number;
   offerAudio?: boolean;
 }) {
+  const { locale } = useLocale();
+  const t = strings[locale].resultCard;
+  const kindLabel = strings[locale].downloader.kindLabel;
   const Icon = KIND_ICON[item.kind];
   const dimensions = item.width && item.height ? ` · ${item.width}×${item.height}` : '';
 
@@ -42,9 +45,9 @@ export function ResultCard({
       )}
 
       <div className={item.kind === 'video' ? 'video-details' : ''}>
-        <h3>{item.title || `Archivo ${position}`}</h3>
+        <h3>{item.title || t.file(position)}</h3>
         <small>
-          {describe(item)}{item.quality && ` · ${item.quality}`} · {new URL(item.url).hostname}
+          {describe(item, t)}{item.quality && ` · ${item.quality}`} · {new URL(item.url).hostname}
           {dimensions}
         </small>
       </div>
@@ -61,7 +64,7 @@ export function ResultCard({
         </VideoDownload>
       ) : (
         <a className="download" href={mediaFileUrl(item)}>
-          <ArrowDownToLine size={17} /> Descargar {KIND_LABEL[item.kind]}
+          <ArrowDownToLine size={17} /> {t.download(kindLabel[item.kind])}
         </a>
       )}
     </article>
