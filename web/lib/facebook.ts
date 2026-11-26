@@ -22,7 +22,52 @@ function facebookCdn(raw: string): string | undefined {
   }
 }
 
+export function hasFacebookTitle(title: string): boolean {
+  return !/^(?:|(?:(?:www|m|web)\.)?facebook(?:\.com)?|log in(?:.*facebook)?|inicia sesi[oó]n(?:.*facebook)?)$/i.test(title.trim());
+}
+
+function facebookVideoId(url: URL): string | undefined {
+  const id = /^\/(?:[^/]+\/)?(?:reels?|videos)\/(\d+)(?:\/|$)/i.exec(url.pathname)?.[1] ??
+    (/^\/(?:watch|video\.php)\/?$/i.test(url.pathname) ? url.searchParams.get('v') : null);
+  return id && /^\d+$/.test(id) ? id : undefined;
+}
+
 export async function resolveFacebookPage(
+  source: URL,
+  load: (url: string, stage: 'page' | 'embed') => Promise<Response>,
+  probe: (url: string) => Promise<Response>,
+): Promise<ResolvedMedia> {
+  const result = await resolveFacebookMediaPage(source, load, probe);
+  if (!result.items.some(item => item.kind === 'video') || hasFacebookTitle(result.title)) return result;
+
+  const id = facebookVideoId(source);
+  if (id) {
+    try {
+      const watch = new URL('https://www.facebook.com/watch/');
+      watch.searchParams.set('v', id);
+      const response = await load(watch.href, 'page');
+      const target = new URL(response.url || watch.href);
+      if (isFacebook(target) && facebookVideoId(target) === id &&
+        response.headers.get('content-type')?.toLowerCase().includes('text/html')) {
+        const html = await boundedText(response);
+        const { title: pageTitle } = extract(html, target.href);
+        const caption = /<meta\s+property=["']og:description["']\s+content=(["'])([\s\S]*?)\1/i.exec(html)?.[2]?.trim();
+        const title = caption && pageTitle.startsWith(caption + ' | ') ? caption : pageTitle.replace(/\s*\|\s*Facebook$/i, '');
+        if (hasFacebookTitle(title)) {
+          return { ...result, title, items: result.items.map(item => ({ ...item, title })), facebookTitleChecked: true };
+        }
+      } else {
+        await response.body?.cancel();
+      }
+    } catch (error) {
+      // A title lookup must not prevent the media from being downloaded.
+      if (error instanceof OriginRateLimitError) return result;
+    }
+  }
+  return { ...result, facebookTitleChecked: true };
+}
+
+async function resolveFacebookMediaPage(
   source: URL,
   load: (url: string, stage: 'page' | 'embed') => Promise<Response>,
   probe: (url: string) => Promise<Response>,
@@ -55,11 +100,11 @@ export async function resolveFacebookPage(
       }
       const embedded = await resolveFacebook(page, await boundedText(response), probe);
       if (!original) return embedded;
-      const title = original.title;
+      const title = hasFacebookTitle(original.title) ? original.title : embedded.title;
       const known = new Set(original.items.map(item => item.url));
       const items = [
         ...embedded.items.filter(item => !known.has(item.url)).map(item => ({ ...item, title })),
-        ...original.items,
+        ...original.items.map(item => ({ ...item, title })),
       ];
       return { title, items, facebookEmbedChecked: true };
     } catch (error) {

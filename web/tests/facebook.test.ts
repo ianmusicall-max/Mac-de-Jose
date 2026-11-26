@@ -80,3 +80,19 @@ test('recovers the video from the public player when the reel permalink fails', 
   }, async () => new Response(null, { headers: { 'Content-Type': 'video/mp4' } }));
   assert.deepEqual(result.items.map(item => item.url), [sd]);
 });
+
+
+test('replaces a generic embedded title with the public Watch page title', async () => {
+  const result = await resolveFacebookPage(page, async (url, stage) => {
+    if (stage === 'embed') {
+      return new Response(`<title>Facebook</title><script>{"sd_src":"${sd}"}</script>`, { headers: { 'Content-Type': 'text/html' } });
+    }
+    if (new URL(url).pathname === '/watch/') {
+      assert.equal(new URL(url).searchParams.get('v'), '123');
+      return new Response('<title>Concierto en Bogotá | Banda</title><meta property="og:description" content="Concierto en Bogotá">', { headers: { 'Content-Type': 'text/html' } });
+    }
+    return new Response('<title>Facebook</title>', { headers: { 'Content-Type': 'text/html' } });
+  }, async () => new Response(null, { headers: { 'Content-Type': 'video/mp4' } }));
+  assert.equal(result.title, 'Concierto en Bogotá');
+  assert.equal(result.items[0].title, result.title);
+});

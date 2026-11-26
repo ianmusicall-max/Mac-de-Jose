@@ -1,6 +1,6 @@
 import { extract, publicUrl, type Media } from './media.ts';
 import { OriginRateLimitError } from './rate-limit.ts';
-export type ResolvedMedia = { title: string; items: Media[]; warning?: string; retryAfter?:number; fromArchive?:boolean; albumSize?:number; resolvedAlbumItems?:number; albumWarning?:string; facebookEmbedChecked?:true };
+export type ResolvedMedia = { title: string; items: Media[]; warning?: string; retryAfter?:number; fromArchive?:boolean; albumSize?:number; resolvedAlbumItems?:number; albumWarning?:string; facebookEmbedChecked?:true; facebookTitleChecked?:true };
 export function instagramPost(raw: string): string | null {
   const url = new URL(raw);
   if (url.hostname !== 'instagram.com' && url.hostname !== 'www.instagram.com') return null;

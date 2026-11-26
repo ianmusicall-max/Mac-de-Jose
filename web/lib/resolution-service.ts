@@ -1,6 +1,6 @@
 import {sourceKey} from './archive.ts';
 import {OriginRateLimitError} from './rate-limit.ts';
-import {isFacebook} from './facebook.ts';
+import {hasFacebookTitle,isFacebook} from './facebook.ts';
 import {ResolutionCache} from './resolution-cache.ts';
 import type {ResolvedMedia} from './instagram.ts';
 
@@ -30,9 +30,12 @@ export class ResolutionService {
       const saved=await this.archive.find(key);
       const needsImages=images&&saved&&key.startsWith('https://www.instagram.com/p/')&&
         (!saved.items.some(item=>item.kind==='image')||saved.albumSize===undefined);
-      const needsFacebookVideo=saved?.items.length&&isFacebook(new URL(key))&&!saved.facebookEmbedChecked;
-      if(!refresh&&!needsImages&&!needsFacebookVideo&&saved?.items.length)return saved;
-      if(refresh||needsImages||needsFacebookVideo)this.cache.invalidate(key);
+      const needsFacebookUpdate=saved?.items.length&&isFacebook(new URL(key))&&(
+        !saved.facebookEmbedChecked||
+        !saved.facebookTitleChecked&&!hasFacebookTitle(saved.title)&&saved.items.some(item=>item.kind==='video')
+      );
+      if(!refresh&&!needsImages&&!needsFacebookUpdate&&saved?.items.length)return saved;
+      if(refresh||needsImages||needsFacebookUpdate)this.cache.invalidate(key);
       try {
         const result=await this.cache.get(key,async()=>{
           const loaded=await this.load(key);
@@ -45,7 +48,7 @@ export class ResolutionService {
         if(result.retryAfter||!result.items.length)this.cache.invalidate(key);
         return result;
       } catch(error) {
-        if(needsFacebookVideo&&saved)return {
+        if(needsFacebookUpdate&&saved)return {
           ...saved,
           ...(error instanceof OriginRateLimitError?{retryAfter:error.retryAfter}:{}),
         };
