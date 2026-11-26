@@ -17,7 +17,9 @@ export function tikTokVideoId(url: URL): string | undefined {
  * carry a Referer pointing back at tiktok.com.
  */
 export function isTikTokCdn(hostname: string): boolean {
-  return /tiktok|ibyteimg|ibytedtos/i.test(hostname);
+  return ['tiktok.com', 'tiktokcdn.com', 'tiktokcdn-us.com', 'tiktokv.com', 'tiktokv.us',
+    'ibyteimg.com', 'ibytedtos.com', 'byteoversea.com', 'bytefcdn-oversea.com'].some(domain =>
+    hostname === domain || hostname.endsWith('.' + domain));
 }
 
 type Address = string | { UrlList?: string[]; UrlKey?: string; src?: string };
@@ -79,30 +81,26 @@ export async function resolveTikTok(
   ]);
   const title = typeof item.desc === 'string' && item.desc.trim() ? item.desc.trim() : `TikTok ${id}`;
   if (candidates.size === 0) {
-    throw new Error('TikTok no ofreció un archivo MP4 descargable para este vídeo. (sin enlaces de vídeo en la página)');
+    throw new Error('TikTok no ofreció un archivo MP4 descargable para este vídeo.');
   }
-  const attempts: string[] = [];
+
   for (const candidate of [...candidates].slice(0, 8)) {
     try {
       if (typeof candidate !== 'string') continue;
       const url = publicUrl(new URL(candidate, page).href).href;
       const target = new URL(url);
-      if (isTikTok(target) || target.pathname.endsWith('/media-video-hvc1/')) {
-        attempts.push('omitido (dominio de tiktok.com)');
-        continue;
-      }
+      if (target.pathname.endsWith('/media-video-hvc1/')) continue;
+      if (isTikTok(target) && !/^\/(?:aweme\/v1\/play|api\/play|video\/tos)(?:\/|$)/.test(target.pathname)) continue;
       const response = await fetchVideo(url);
       const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
       await response.body?.cancel();
       if (response.ok && type === 'video/mp4') {
         return { title, items: [{ url, kind: 'video', title }] };
       }
-      attempts.push(`HTTP ${response.status}, content-type=${type || '(ninguno)'}`);
     } catch (error) {
       if (error instanceof OriginRateLimitError) throw error;
-      attempts.push(error instanceof Error ? error.message : 'error desconocido');
     }
   }
 
-  throw new Error(`TikTok no ofreció un archivo MP4 descargable para este vídeo. (${attempts.join(' · ')})`);
+  throw new Error('TikTok no ofreció un archivo MP4 descargable para este vídeo.');
 }

@@ -52,3 +52,14 @@ test('reconoce los dominios de CDN que exigen Referer', () => {
   assert.ok(isTikTokCdn('v9-tiktok.ibyteimg.com'));
   assert.equal(isTikTokCdn('video.example.com'), false);
 });
+
+
+test('accepts TikTok playback links while skipping ordinary post pages', async () => {
+  const playback = 'https://www.tiktok.com/aweme/v1/play/?video_id=test';
+  const result = await resolveTikTok(page, html({ ...item, video: { playAddr: [page.href, playback] } }), async candidate => {
+    assert.equal(candidate, playback);
+    return new Response(null, { headers: { 'Content-Type': 'video/mp4' } });
+  });
+  assert.equal(result.items[0]?.url, playback);
+  assert.equal(isTikTokCdn('tiktokcdn.com.example.org'), false);
+});
