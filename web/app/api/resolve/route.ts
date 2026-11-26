@@ -3,13 +3,13 @@ import { resolveYoutubeJob } from '@/lib/youtube-jobs';
 import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
 import { resolveInstagram, instagramPost } from '@/lib/instagram';
-import { isTikTok, resolveTikTok, tikTokVideoId } from '@/lib/tiktok';
+import { isTikTok, resolveTikTok, tikTokMediaHeaders, tikTokVideoId } from '@/lib/tiktok';
 import { isFacebook, resolveFacebookPage } from '@/lib/facebook';
 import { resolveYouTube, youtubeVideoId } from '@/lib/youtube';
 import { ResolutionService } from '@/lib/resolution-service';
 import {archive,sharedBackoff,instagramContext} from '@/lib/server-storage';
-async function fetchOrigin(stage:'page'|'query'|'embed'|'video',url:string,init?:RequestInit) {
-  try{return await remote(url,init,stage === 'video' ? 5_000 : 20_000,sharedBackoff);}
+async function fetchOrigin(stage:'page'|'query'|'embed'|'video',url:string,init?:RequestInit,redirectHeaders?:Parameters<typeof remote>[4]) {
+  try{return await remote(url,init,stage === 'video' ? 5_000 : 20_000,sharedBackoff,redirectHeaders);}
   catch(error){
     console.warn('origin_request_failed',{origin:new URL(url).origin,stage,rateLimited:error instanceof OriginRateLimitError,...(error instanceof OriginRateLimitError?{retryAfter:error.retryAfter}:{})});
     throw error;
@@ -34,7 +34,7 @@ async function resolve(url: string) {
       throw new Error('Usa el enlace de una publicación pública de vídeo de TikTok.');
     }
     return resolveTikTok(page, await boundedText(response), candidate =>
-      fetchOrigin('video', candidate, {headers:{Referer:'https://www.tiktok.com/'}}));
+      fetchOrigin('video', candidate, { headers: tikTokMediaHeaders(new URL(candidate)) }, tikTokMediaHeaders));
   }
   if (youtube) {
     if (!type.includes('text/html')) {

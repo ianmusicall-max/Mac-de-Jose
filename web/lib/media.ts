@@ -24,7 +24,13 @@ async function validateDns(host: string) {
   const addresses = responses.flat();
   if (!addresses.length || addresses.some(a=>!publicAddress(a))) throw new Error('El enlace debe apuntar a un servidor público.');
 }
-export async function remote(raw: string, init?: RequestInit, timeoutMs = 20_000, guard?: {check(origin:string):Promise<void>;record(origin:string,header:string|null):Promise<Error>}): Promise<Response> {
+export async function remote(
+  raw: string,
+  init?: RequestInit,
+  timeoutMs = 20_000,
+  guard?: {check(origin:string):Promise<void>;record(origin:string,header:string|null):Promise<Error>},
+  redirectHeaders?: (destination: URL) => Record<string, string> | undefined,
+): Promise<Response> {
   let url = publicUrl(raw);
   let requestOptions = init;
   for (let i = 0; i < 5; i++) {
@@ -42,8 +48,8 @@ export async function remote(raw: string, init?: RequestInit, timeoutMs = 20_000
       await response.body?.cancel();
       if (!location) throw new Error('Redirección sin destino.');
       url = publicUrl(new URL(location, url).href);
-      // Do not forward query tokens or POST bodies to redirect destinations.
-      requestOptions = undefined;
+      // Only caller-selected headers may be used on a redirect. The original request options are discarded.
+      requestOptions = redirectHeaders ? { headers: redirectHeaders(url) } : undefined;
       continue;
     }
     if (response.status === 429) {

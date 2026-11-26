@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isTikTok, isTikTokCdn, resolveTikTok } from '../lib/tiktok.ts';
+import { isTikTok, isTikTokCdn, resolveTikTok, tikTokMediaHeaders } from '../lib/tiktok.ts';
+import { remote } from '../lib/media.ts';
 import { OriginRateLimitError } from '../lib/rate-limit.ts';
 
 const page = new URL('https://www.tiktok.com/@creador/video/123');
@@ -62,4 +63,33 @@ test('accepts TikTok playback links while skipping ordinary post pages', async (
   });
   assert.equal(result.items[0]?.url, playback);
   assert.equal(isTikTokCdn('tiktokcdn.com.example.org'), false);
+});
+
+
+test('keeps the playback Referer through a TikTok CDN redirect only', async context => {
+  const playback = 'https://www.tiktok.com/aweme/v1/play/?video_id=test';
+  const cdn = 'https://v16-web-newkey.tiktokcdn.com/video.mp4';
+  const external = 'https://tiktokcdn.com.example.org/final';
+  context.mock.method(globalThis, 'fetch', async (input: URL | string, init?: RequestInit) => {
+    const url = new URL(input);
+    if (url.hostname === 'cloudflare-dns.com') {
+      return Response.json({ Answer: [{ type: 1, data: '8.8.8.8' }] });
+    }
+    const headers = new Headers(init?.headers);
+    if (url.href === playback) {
+      assert.equal(headers.get('referer'), 'https://www.tiktok.com/');
+      return Response.redirect(cdn);
+    }
+    assert.equal(headers.has('authorization'), false);
+    if (url.href === cdn) {
+      assert.equal(headers.get('referer'), 'https://www.tiktok.com/');
+      assert.equal(headers.get('accept-encoding'), 'identity');
+      return Response.redirect(external);
+    }
+    assert.equal(url.href, external);
+    assert.equal(headers.has('referer'), false);
+    return new Response(null, { headers: { 'Content-Type': 'video/mp4' } });
+  });
+  const response = await remote(playback, { headers: { ...tikTokMediaHeaders(new URL(playback)), Authorization: 'test' } }, 1_000, undefined, tikTokMediaHeaders);
+  assert.equal(response.headers.get('content-type'), 'video/mp4');
 });

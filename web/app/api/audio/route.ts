@@ -1,7 +1,7 @@
 import {youtubeFileKey} from '@/lib/youtube-jobs';
 import {bucket,storedResponse,sharedBackoff} from '@/lib/server-storage';
 import {dispositionFilename,namedDownload,readableFilename} from '@/lib/download-name';
-import {isTikTokCdn} from '@/lib/tiktok';
+import {tikTokMediaHeaders} from '@/lib/tiktok';
 import {digest} from '@/lib/archive';
 import {publicUrl,remote} from '@/lib/media';
 import {OriginRateLimitError} from '@/lib/rate-limit';
@@ -35,8 +35,8 @@ export async function GET(request:Request){
    data=await source.arrayBuffer();
   }else{
    if(!url||id!==await digest(url))throw new AudioExtractionError('El vídeo guardado no está disponible. Vuelve a buscar el enlace.');
-   const headers=isTikTokCdn(new URL(url).hostname)?{Referer:'https://www.tiktok.com/'}:undefined;
-   const response=await remote(url,{headers},10*60_000,sharedBackoff);
+   const headers=tikTokMediaHeaders(new URL(url));
+   const response=await remote(url,{headers},10*60_000,sharedBackoff,headers?tikTokMediaHeaders:undefined);
    if(!(response.headers.get('content-type')||'').startsWith('video/')){await response.body?.cancel();throw new AudioExtractionError('Necesitamos un vídeo MP4 para extraer el audio.');}
    const original=readableFilename(dispositionFilename(response.headers.get('content-disposition')));
    originalFilename=original&&namedDownload(original,'video/mp4');

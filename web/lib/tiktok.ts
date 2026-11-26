@@ -24,6 +24,14 @@ export function isTikTokCdn(hostname: string): boolean {
     hostname === domain || hostname.endsWith('.' + domain));
 }
 
+export function tikTokMediaHeaders(url: URL): Record<string, string> | undefined {
+  return isTikTokCdn(url.hostname) ? { Referer: 'https://www.tiktok.com/', 'Accept-Encoding': 'identity' } : undefined;
+}
+
+function isTikTokPlayback(url: URL): boolean {
+  return isTikTok(url) && /^\/(?:aweme\/v1\/play|api\/play|video\/tos)(?:\/|$)/.test(url.pathname);
+}
+
 type Address = string | { UrlList?: string[]; UrlKey?: string; src?: string };
 type TikTokItem = {
   id?: string;
@@ -75,24 +83,27 @@ export async function resolveTikTok(
     .sort((a, b) => (b.Bitrate ?? 0) - (a.Bitrate ?? 0));
   const variantUrls = [...new Set(variants.flatMap(variant => addressUrls(variant.PlayAddr)))];
   const candidates = new Set([
+    ...addressUrls(item.video.downloadAddr),
+    ...addressUrls(item.video.download?.url),
     ...variantUrls.slice(0, 4),
     ...[item.video.playAddr].flat().flatMap(addressUrls),
     ...addressUrls(item.video.PlayAddrStruct),
-    ...addressUrls(item.video.downloadAddr),
-    ...addressUrls(item.video.download?.url),
   ]);
   const title = typeof item.desc === 'string' && item.desc.trim() ? item.desc.trim() : `TikTok ${id}`;
-  if (candidates.size === 0) {
-    throw new Error(TIKTOK_MP4_UNAVAILABLE);
-  }
-
-  for (const candidate of [...candidates].slice(0, 8)) {
+  const playback: URL[] = [];
+  const direct: URL[] = [];
+  for (const candidate of candidates) {
     try {
       if (typeof candidate !== 'string') continue;
-      const url = publicUrl(new URL(candidate, page).href).href;
-      const target = new URL(url);
+      const target = publicUrl(new URL(candidate, page).href);
       if (target.pathname.endsWith('/media-video-hvc1/')) continue;
-      if (isTikTok(target) && !/^\/(?:aweme\/v1\/play|api\/play|video\/tos)(?:\/|$)/.test(target.pathname)) continue;
+      if (isTikTokPlayback(target)) playback.push(target);
+      else if (!isTikTok(target)) direct.push(target);
+    } catch { /* Ignore malformed candidates. */ }
+  }
+  for (const target of [...playback, ...direct].slice(0, 8)) {
+    try {
+      const url = target.href;
       const response = await fetchVideo(url);
       const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
       await response.body?.cancel();
