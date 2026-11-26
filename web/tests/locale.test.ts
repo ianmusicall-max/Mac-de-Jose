@@ -7,13 +7,18 @@ test('maps Spanish-speaking South America and Spain to es',()=>{
  assert.equal(localeForCountry('pe'),'es');
  assert.equal(localeForCountry('ES'),'es');
 });
+test('maps Mexico and the Spanish-speaking Caribbean to es',()=>{
+ assert.equal(localeForCountry('MX'),'es');
+ assert.equal(localeForCountry('CU'),'es');
+ assert.equal(localeForCountry('DO'),'es');
+ assert.equal(localeForCountry('PR'),'es');
+});
 test('maps Brazil and Portugal to pt',()=>{
  assert.equal(localeForCountry('BR'),'pt');
  assert.equal(localeForCountry('PT'),'pt');
 });
-test('defaults everyone else to en, including Mexico and non-Spanish South America',()=>{
+test('defaults everyone else to en, including non-Spanish South America',()=>{
  assert.equal(localeForCountry('US'),'en');
- assert.equal(localeForCountry('MX'),'en');
  assert.equal(localeForCountry('GB'),'en');
  assert.equal(localeForCountry('GY'),'en');
  assert.equal(localeForCountry(null),'en');

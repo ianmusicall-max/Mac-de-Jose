@@ -13,21 +13,16 @@ export function pick(text: LocalizedText, locale: Locale): string {
   return text[locale];
 }
 
-/** Spanish-speaking South America, plus Spain. */
+/** Spanish-speaking South America, Spain, Mexico and the Spanish-speaking Caribbean. */
 const SPANISH_COUNTRIES = new Set([
   'AR', 'BO', 'CL', 'CO', 'EC', 'PY', 'PE', 'UY', 'VE', 'ES',
+  'MX', 'CU', 'DO', 'PR',
 ]);
 
 /** Brazil and Portugal. */
 const PORTUGUESE_COUNTRIES = new Set(['BR', 'PT']);
 
-/**
- * North America, Europe and everywhere else default to English. Mexico,
- * Central America and the Spanish-speaking Caribbean are NOT included in
- * SPANISH_COUNTRIES (the brief was literally "South America or Spain"), so
- * they currently fall back to English too — worth revisiting if that's not
- * what's wanted, since those are large Spanish-speaking audiences.
- */
+/** The rest of North America, Europe and everywhere else default to English. */
 export function localeForCountry(countryCode: string | null | undefined): Locale {
   const code = (countryCode || '').toUpperCase();
   if (SPANISH_COUNTRIES.has(code)) return 'es';
