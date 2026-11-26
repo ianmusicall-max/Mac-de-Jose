@@ -9,14 +9,6 @@ export function isLocale(value: string): value is Locale {
   return (LOCALES as readonly string[]).includes(value);
 }
 
-/** es/pt are auto-detected from the browser; anything else falls back to English. */
-export function detectLocale(language: string | undefined | null): Locale {
-  const lower = (language || '').toLowerCase();
-  if (lower.startsWith('es')) return 'es';
-  if (lower.startsWith('pt')) return 'pt';
-  return DEFAULT_LOCALE;
-}
-
 export function pick(text: LocalizedText, locale: Locale): string {
   return text[locale];
 }

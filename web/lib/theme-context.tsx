@@ -10,43 +10,32 @@ const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void }>({
 });
 
 /**
- * `explicit` is the person's own override, if any; it is persisted and
- * applied as `data-theme` on <html>, which overrides the OS preference
- * either way (app/styles/base.css reacts to that attribute). `theme`, read
- * by consumers (e.g. to pick the toggle's icon), resolves to the explicit
- * choice or else the OS's live `prefers-color-scheme`, so it always matches
- * what is actually on screen.
+ * Light is always the default, regardless of the OS's `prefers-color-scheme`.
+ * Only an explicit choice from the header toggle, persisted in localStorage,
+ * switches to dark. `data-theme` is always set on <html> (never removed) so
+ * the OS preference never overrides it (app/styles/base.css reacts to that
+ * attribute).
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [explicit, setExplicit] = useState<Theme | null>(null);
-  const [systemDark, setSystemDark] = useState(false);
+  const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === 'light' || stored === 'dark') {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setExplicit(stored);
+        setTheme(stored);
       }
-    } catch { /* Storage may be disabled; the OS preference governs instead. */ }
-
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    setSystemDark(media.matches);
-    const onChange = (event: MediaQueryListEvent) => setSystemDark(event.matches);
-    media.addEventListener('change', onChange);
-    return () => media.removeEventListener('change', onChange);
+    } catch { /* Storage may be disabled; light stays the default. */ }
   }, []);
 
   useEffect(() => {
-    if (explicit) document.documentElement.setAttribute('data-theme', explicit);
-    else document.documentElement.removeAttribute('data-theme');
-  }, [explicit]);
-
-  const theme: Theme = explicit ?? (systemDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   function toggleTheme() {
     const next: Theme = theme === 'dark' ? 'light' : 'dark';
-    setExplicit(next);
+    setTheme(next);
     try { localStorage.setItem(STORAGE_KEY, next); } catch { /* Nothing to persist. */ }
   }
 
