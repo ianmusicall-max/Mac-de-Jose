@@ -39,6 +39,32 @@ h1 > span {
   max-width: 62ch;
 }
 
+/* Home page only: leaves room for an optional mascot illustration next to
+   the hero copy. Drop an image at public/mascot/reely.png and it appears
+   here automatically (hero-mascot hides itself via onError if it's missing). */
+.hero-with-mascot {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hero-copy {
+  flex: 1 1 360px;
+}
+
+.hero-mascot {
+  flex: 0 0 auto;
+  width: 160px;
+  height: auto;
+}
+
+@media (max-width: 640px) {
+  .hero-mascot {
+    width: 110px;
+  }
+}
+
 .band {
   margin-top: 52px;
   padding-top: 28px;

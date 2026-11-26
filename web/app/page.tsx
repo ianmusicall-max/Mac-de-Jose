@@ -2,6 +2,9 @@
 import { Camera, Film, Music2 } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { HowItWorks } from '@/components/sections/how-it-works';
+import { Benefits } from '@/components/sections/benefits';
+import { HOME_STEPS } from '@/lib/tools';
 import { useLocale } from '@/lib/i18n/locale-context';
 import { strings } from '@/lib/i18n/strings';
 
@@ -20,9 +23,22 @@ export default function Home() {
     <>
       <SiteHeader current="/" />
       <main className="page">
-        <section className="hero" aria-labelledby="home-title">
-          <h1 id="home-title">{t.titleLead}{' '}<span>{t.titleAccent}</span></h1>
-          <p className="hero-intro">{t.intro}</p>
+        <section className="hero hero-with-mascot" aria-labelledby="home-title">
+          <div className="hero-copy">
+            <h1 id="home-title">{t.titleLead}{' '}<span>{t.titleAccent}</span></h1>
+            <p className="hero-intro">{t.intro}</p>
+          </div>
+          {/* Optional: drop an exported mascot image at public/mascot/reely.png
+              and it shows up here with no further changes. Hidden by default
+              and while missing, via onError, so nothing breaks until it exists. */}
+          <img
+            className="hero-mascot"
+            src="/mascot/reely.png"
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            onError={(event) => { event.currentTarget.style.display = 'none'; }}
+          />
         </section>
         <div className="tool-links platform-links">
           {PLATFORMS.map(({ name, path, Icon }) => (
@@ -34,6 +50,8 @@ export default function Home() {
             </a>
           ))}
         </div>
+        <HowItWorks steps={HOME_STEPS} />
+        <Benefits />
       </main>
       <SiteFooter />
     </>

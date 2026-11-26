@@ -54,6 +54,34 @@ const SCAN_STEP = {
   },
 };
 
+/** The home page covers all four platforms, so its steps stay platform-neutral. */
+export const HOME_STEPS: Tool['steps'] = [
+  {
+    heading: { en: 'Paste the link', es: 'Pega el enlace', pt: 'Cole o link' },
+    body: {
+      en: 'From Instagram, TikTok, Facebook or YouTube — copy the link and paste it above.',
+      es: 'De Instagram, TikTok, Facebook o YouTube: copia el enlace y pégalo arriba.',
+      pt: 'Do Instagram, TikTok, Facebook ou YouTube: copie o link e cole-o acima.',
+    },
+  },
+  {
+    heading: { en: 'We detect the platform', es: 'Detectamos la plataforma', pt: 'Detectamos a plataforma' },
+    body: {
+      en: "We read what the post exposes publicly and show you what's there, split by format.",
+      es: 'Leemos lo que la publicación expone públicamente y te mostramos lo que hay, separado por formato.',
+      pt: 'Lemos o que a publicação expõe publicamente e mostramos o que há, separado por formato.',
+    },
+  },
+  {
+    heading: { en: 'Choose and download', es: 'Elige y descarga', pt: 'Escolha e baixe' },
+    body: {
+      en: 'Video, audio or image: switch formats without repeating the search, and save the file to your device.',
+      es: 'Vídeo, audio o imagen: cambias de formato sin repetir la búsqueda y guardas el archivo en tu dispositivo.',
+      pt: 'Vídeo, áudio ou imagem: você troca de formato sem repetir a busca e salva o arquivo no seu dispositivo.',
+    },
+  },
+];
+
 /** Questions worth answering honestly, reused where they apply to every tool. */
 const COMMON_FAQ = [
   {
