@@ -8,3 +8,9 @@ test('the ZIP includes every image in the album without changing image bytes',()
  assert.deepEqual(entries['imagen-020-20.jpg'],files[19].data);
 });
 test('an empty album is never reported as a successful download',()=>{assert.throws(()=>albumZip([]),/No hay imágenes/);});
+
+test('keeps photo names and suffixes duplicate names in the ZIP',()=>{
+ const data=new Uint8Array([1,2,3]);
+ const files=[1,2,3].map(index=>({index,data,type:'image/jpeg',name:'Bogotá.jpg'}));
+ assert.deepEqual(Object.keys(unzipSync(albumZip(files))),['Bogotá.jpg','Bogotá (2).jpg','Bogotá (3).jpg']);
+});

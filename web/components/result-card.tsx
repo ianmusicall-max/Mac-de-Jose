@@ -3,6 +3,7 @@ import { ArrowDownToLine, Film, ImageIcon, Music2 } from 'lucide-react';
 import type { Media } from '@/lib/media';
 import { AudioDownloadButton } from '@/components/audio-download';
 import { ImageDownloadButton, ImagePreview } from '@/components/image-download';
+import { mediaFileUrl } from '@/lib/album';
 import { VideoDownload } from '@/components/video-download';
 import { VideoPreview } from '@/components/video-preview';
 
@@ -14,12 +15,6 @@ function describe(item: Media): string {
   if (item.kind === 'video') return 'Vídeo';
   if (item.kind === 'audio') return item.derivedFromVideo ? 'M4A · audio del vídeo' : 'Audio';
   return item.isPreview ? 'Imagen de portada' : 'Imagen';
-}
-
-function downloadHref(item: Media): string {
-  const params = new URLSearchParams({ url: item.url });
-  if (item.assetId) params.set('id', item.assetId);
-  return '/api/download?' + params;
 }
 
 export function ResultCard({
@@ -61,11 +56,11 @@ export function ResultCard({
       ) : item.kind === 'image' ? (
         <ImageDownloadButton item={item} />
       ) : item.kind === 'video' ? (
-        <VideoDownload key={downloadHref(item)} href={downloadHref(item)}>
+        <VideoDownload key={mediaFileUrl(item)} href={mediaFileUrl(item)}>
           {offerAudio && <AudioDownloadButton item={item} />}
         </VideoDownload>
       ) : (
-        <a className="download" href={downloadHref(item)}>
+        <a className="download" href={mediaFileUrl(item)}>
           <ArrowDownToLine size={17} /> Descargar {KIND_LABEL[item.kind]}
         </a>
       )}

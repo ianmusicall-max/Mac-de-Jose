@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import {ArrowDownToLine,LoaderCircle} from 'lucide-react';
+import {dispositionFilename,namedDownload} from '@/lib/download-name';
 import type {Media} from '@/lib/media';
 export function AudioDownloadButton({item}:{item:Media}){
  const [busy,setBusy]=useState(false);const [error,setError]=useState('');const active=useRef<AbortController|null>(null);
@@ -8,12 +9,12 @@ export function AudioDownloadButton({item}:{item:Media}){
  async function download(){
   if(busy)return;setBusy(true);setError('');active.current=new AbortController();
   try{
-   const params=new URLSearchParams({url:item.url});if(item.assetId)params.set('id',item.assetId);
+   const params=new URLSearchParams({url:item.url,name:item.title.slice(0,400)});if(item.assetId)params.set('id',item.assetId);
    const response=await fetch('/api/audio?'+params,{signal:active.current.signal});
    const type=response.headers.get('content-type')||'';
    if(!response.ok||!type.startsWith('audio/'))throw new Error(type.startsWith('text/plain')?(await response.text()).slice(0,300):'No se pudo preparar el audio. Vuelve a intentar la descarga.');
    const blob=await response.blob();if(!blob.size)throw new Error('La pista de audio está vacía.');
-   const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='videovault-audio.m4a';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+   const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=dispositionFilename(response.headers.get('content-disposition'))??namedDownload(item.title,type);document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   }catch(e){if(!(e instanceof DOMException&&e.name==='AbortError'))setError(e instanceof Error?e.message:'No se pudo extraer el audio.');}
   finally{setBusy(false);}
  }

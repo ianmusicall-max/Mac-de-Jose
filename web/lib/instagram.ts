@@ -13,7 +13,7 @@ export function extractInstagram(html: string, shortcode: string): ResolvedMedia
     try {
       const clean = raw.replace(/\\\//g,'/').replace(/\\u0026/g,'&').replace(/&amp;/g,'&');
       const url = publicUrl(clean).href;
-      if (!result.items.some(item=>item.url===url)) result.items.push({url,kind,title:`instagram-${shortcode}`});
+      if (!result.items.some(item=>item.url===url)) result.items.push({url,kind,title:result.title==='www.instagram.com'?`Instagram ${shortcode}`:result.title});
     } catch { /* Ignore invalid media URLs. */ }
   };
   for (const match of html.matchAll(/"video_url"\s*:\s*"([^"\n]+)"/g)) add(match[1],'video');
@@ -59,7 +59,8 @@ export function extractPublicInstagram(payload: unknown, shortcode: string): Res
   // Only use content Instagram explicitly returns to a logged-out visitor.
   const media = record(record(record(record(payload)?.data)?.xig_polaris_media)?.if_not_gated_logged_out);
   if (!media) return null;
-  const title = typeof record(media.user)?.username === 'string' ? `Instagram · ${record(media.user)!.username}` : `Instagram ${shortcode}`;
+  const caption = record(media.caption)?.text;
+  const title = typeof caption === 'string' && caption.trim() ? caption.trim() : typeof record(media.user)?.username === 'string' ? `Instagram · ${record(media.user)!.username}` : `Instagram ${shortcode}`;
   const items: Media[] = [];
   const nodes = Array.isArray(media.carousel_media)&&media.carousel_media.length ? media.carousel_media : [media];
   for (const [index,node] of nodes.entries()) {

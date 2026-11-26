@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { ArrowDownToLine, Share } from 'lucide-react';
-import { downloadName } from '@/lib/download-name';
+import { dispositionFilename, namedDownload } from '@/lib/download-name';
 
 export function VideoDownload({ href, children }: { href: string; children?: ReactNode }) {
   const [file, setFile] = useState<File>();
@@ -32,8 +32,8 @@ export function VideoDownload({ href, children }: { href: string; children?: Rea
       }
 
       const blob = await response.blob();
-      const name = response.headers.get('content-disposition')?.match(/filename="([^"]+)"/)?.[1] || 'videovault';
-      const video = new File([blob], downloadName(name, type), { type });
+      const name = dispositionFilename(response.headers.get('content-disposition')) ?? namedDownload('VideoVault', type);
+      const video = new File([blob], name, { type });
       if (!video.size || !navigator.canShare({ files: [video] })) {
         setFallback(true);
         return;

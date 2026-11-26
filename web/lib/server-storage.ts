@@ -1,5 +1,5 @@
 import {env} from 'cloudflare:workers';
-import {downloadName} from './download-name';
+import {attachment,namedDownload,readableFilename} from './download-name';
 import {MediaArchive,SharedBackoff,InstagramContext,type ArchiveStorage} from './archive';
 export function bucket():R2Bucket {
   if(!env.BUCKET)throw new Error('El almacenamiento de descargas no está disponible.');
@@ -13,13 +13,13 @@ const storage:ArchiveStorage={
 export const archive=new MediaArchive(storage);
 export const instagramContext=new InstagramContext(storage);
 export const sharedBackoff=new SharedBackoff(storage);
-export function storedHeaders(object:R2Object):Headers {
+export function storedHeaders(object:R2Object,title?:string|null):Headers {
  const type=object.httpMetadata?.contentType||'application/octet-stream';
- const name=downloadName(object.customMetadata?.filename||'videovault',type);
- return new Headers({'Content-Type':type,'Content-Length':String(object.size),'Content-Disposition':`attachment; filename="${name}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});
+ const name=namedDownload(object.customMetadata?.originalFilename || title || readableFilename(object.customMetadata?.filename) || 'VideoVault',type);
+ return new Headers({'Content-Type':type,'Content-Length':String(object.size),'Content-Disposition':attachment(name),'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});
 }
-export function storedResponse(object:R2ObjectBody):Response {
- const headers=storedHeaders(object);
+export function storedResponse(object:R2ObjectBody,title?:string|null):Response {
+ const headers=storedHeaders(object,title);
  if(headers.get('Content-Type')?.startsWith('video/'))headers.set('Accept-Ranges','bytes');
  return new Response(object.body,{headers});
 }

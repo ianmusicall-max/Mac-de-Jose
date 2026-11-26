@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { timingSafeEqual } from 'node:crypto';
 import { bucket } from './server-storage';
 import { digest } from './archive';
+import { boundedText } from './media';
 import { youtubeVideoId } from './youtube';
 
 const jobs = 'youtube/pending/';
@@ -36,7 +37,27 @@ export async function resolveYoutubeJob(id: string, url: string, savedOnly: bool
   const fileId = await assetId(id);
   const store = bucket();
   if (await store.head('youtube/files/' + fileId)) {
-    const title = 'YouTube · ' + id;
+    const titleKey = 'youtube/titles/' + id;
+    const storedTitle = await store.get(titleKey);
+    let title = storedTitle ? await storedTitle.text() : '';
+    if (!title && !savedOnly) {
+      try {
+        const endpoint = new URL('https://www.youtube.com/oembed');
+        endpoint.searchParams.set('url', url);
+        endpoint.searchParams.set('format', 'json');
+        const response = await fetch(endpoint, { signal: AbortSignal.timeout(4000), redirect: 'error' });
+        if (response.ok) {
+          const metadata = JSON.parse(await boundedText(response)) as { title?: unknown };
+          if (typeof metadata.title === 'string') {
+            title = metadata.title.trim().slice(0, 400);
+            if (title) await store.put(titleKey, title);
+          }
+        } else {
+          await response.body?.cancel();
+        }
+      } catch { /* Keep archived files available when title lookup fails. */ }
+    }
+    title ||= 'Vídeo de YouTube';
     return reply({ title, items: [{ url, title, kind: 'video', assetId: fileId }] });
   }
   if (savedOnly) return reply({ error: 'No hay archivos guardados para este enlace.' }, 404);
