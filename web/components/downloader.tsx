@@ -116,6 +116,8 @@ export function Downloader({
     event.preventDefault();
     if (busy) return;
     const link = url.trim();
+    const instagram = originOf(link) === 'https://www.instagram.com';
+    let savedOnly = instagram && waiting > 0;
 
     setBusy(true);
     setError('');
@@ -132,10 +134,10 @@ export function Downloader({
     }
 
     try {
-      const request = () => fetch('/api/resolve', {
+      const request = (fromSaved = savedOnly) => fetch('/api/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: link, refresh, kind: selected, platform }),
+        body: JSON.stringify({ url: link, refresh: refresh && !fromSaved, kind: selected, platform, savedOnly: fromSaved }),
       });
       const deadline = Date.now() + 120_000;
       let response = await request();
@@ -155,7 +157,13 @@ export function Downloader({
         try { localStorage.setItem('snapreel-cooldown', JSON.stringify(nextCooldown)); }
         catch { /* The in-memory wait remains available. */ }
       }
+      if (instagram && response.status === 429 && !savedOnly) {
+        savedOnly = true;
+        response = await request(true);
+        data = (await response.json()) as ResolveResponse;
+      }
       if (!response.ok) {
+        if (savedOnly && response.status === 404) throw new Error(t.noSavedDuringWait);
         if (platform === 'tiktok' && data.error === TIKTOK_MP4_UNAVAILABLE) {
           const source = publicUrl(link);
           if (isTikTok(source)) setTikTokFallback(source.href);
@@ -211,7 +219,7 @@ export function Downloader({
               </>
             ) : (
               <>
-                {t.search(t.kindLabel[selected])} <ArrowUpRight size={18} />
+                {waiting > 0 && originOf(url) === 'https://www.instagram.com' ? t.searchSaved : t.search(t.kindLabel[selected])} <ArrowUpRight size={18} />
               </>
             )}
           </button>

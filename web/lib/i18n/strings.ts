@@ -57,6 +57,8 @@ export const strings = {
     faq: { title: 'Frequently asked questions' },
     toolLinks: { title: 'Other tools', open: 'Open' },
     downloader: {
+      searchSaved: 'Search saved files',
+      noSavedDuringWait: 'SnapReel has no saved file for this link. Try again when the countdown ends.',
       tikTokUnavailable: 'TikTok didn’t provide a downloadable file. Open the post and choose Share → Save video if that option is available.',
       openTikTok: 'Open in TikTok',
       urlLabel: "Paste the post's link",
@@ -210,6 +212,8 @@ export const strings = {
     faq: { title: 'Preguntas frecuentes' },
     toolLinks: { title: 'Otras herramientas', open: 'Abrir' },
     downloader: {
+      searchSaved: 'Buscar en guardados',
+      noSavedDuringWait: 'SnapReel no tiene un archivo guardado para este enlace. Vuelve a intentarlo cuando termine la cuenta regresiva.',
       tikTokUnavailable: 'TikTok no entregó un archivo descargable. Abre la publicación y elige Compartir → Guardar vídeo si aparece esa opción.',
       openTikTok: 'Abrir en TikTok',
       urlLabel: 'Pega el enlace de la publicación',
@@ -363,6 +367,8 @@ export const strings = {
     faq: { title: 'Perguntas frequentes' },
     toolLinks: { title: 'Outras ferramentas', open: 'Abrir' },
     downloader: {
+      searchSaved: 'Buscar nos salvos',
+      noSavedDuringWait: 'O SnapReel não tem um arquivo salvo para este link. Tente novamente quando a contagem terminar.',
       tikTokUnavailable: 'O TikTok não forneceu um arquivo para baixar. Abra a publicação e escolha Compartilhar → Salvar vídeo, se a opção estiver disponível.',
       openTikTok: 'Abrir no TikTok',
       urlLabel: 'Cole o link da publicação',
