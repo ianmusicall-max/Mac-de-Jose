@@ -318,6 +318,85 @@ h1 > span {
   }
 }
 
+/* The featured platform card. Sits above the rest and reads as the primary
+   action, because it is the one that works dependably. */
+.platform-featured {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  padding: 28px;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-lg);
+  background: var(--surface-selected);
+  margin-bottom: 34px;
+}
+
+.platform-featured:hover {
+  border-color: var(--green-500);
+}
+
+.platform-featured-badge {
+  position: absolute;
+  top: -10px;
+  left: 24px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--green-800);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.platform-featured-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--green-800);
+  color: #fff;
+}
+
+.platform-featured-copy h2 {
+  font-size: 1.5rem;
+  font-weight: 650;
+  margin-bottom: 6px;
+}
+
+.platform-featured-copy p {
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+.platform-featured-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-brand);
+  white-space: nowrap;
+}
+
+.platform-others-title {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .platform-featured {
+    grid-template-columns: auto 1fr;
+    row-gap: 14px;
+  }
+
+  .platform-featured-go {
+    grid-column: 1 / -1;
+  }
+}
+
 .platform-links .tool-link {
   display: flex;
   flex-direction: column;
