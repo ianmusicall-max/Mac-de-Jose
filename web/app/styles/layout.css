@@ -202,3 +202,43 @@
     padding: 32px 20px;
   }
 }
+
+.reely-stage {
+  position: relative;
+  isolation: isolate;
+  width: 54px;
+  height: 52px;
+  overflow: hidden;
+}
+
+.reely-arrow {
+  position: absolute;
+  inset: 4px 4px auto auto;
+  color: #fff;
+  opacity: 0.65;
+}
+
+.reely-mascot {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 39px;
+  height: auto;
+  transform-origin: center bottom;
+  animation: reely-download 4.6s both;
+}
+
+@keyframes reely-download {
+  0%, 12% { transform: translateY(0) rotate(0); }
+  32% { transform: translateY(7px) rotate(8deg); }
+  44% { transform: translate(4px, 17px) rotate(24deg) scale(1.08, 0.86); }
+  53% { transform: translate(2px, 12px) rotate(-9deg); }
+  63% { transform: translate(2px, 16px) rotate(0); }
+  76% { transform: translate(-1px, 9px) rotate(-10deg); }
+  88% { transform: translate(2px, 4px) rotate(7deg); }
+  100% { transform: translateY(0) rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reely-mascot { animation: none; }
+}

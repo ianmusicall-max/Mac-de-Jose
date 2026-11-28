@@ -16,8 +16,10 @@ export function SiteHeader({ current }: { current: string }) {
     <header className="site-header">
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Keep site navigation independent of client routing. */}
       <a className="brand" href="/" aria-label={t.header.brandLabel}>
-        <span className="brand-icon">
-          <ArrowDownToLine size={22} />
+        <span className="brand-icon reely-stage" aria-hidden="true">
+          <ArrowDownToLine className="reely-arrow" size={13} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="reely-mascot" src="/mascot/reely.png" alt="" width={640} height={467} />
         </span>
         SnapReel
         <span className="beta">WEB</span>

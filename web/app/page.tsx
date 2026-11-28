@@ -32,15 +32,26 @@ export default function Home() {
     <>
       <SiteHeader current="/" />
       <main className="page">
-        <section className="hero hero-with-mascot" aria-labelledby="home-title">
+        <section className="hero hero-with-reel" aria-labelledby="home-title">
           <div className="hero-copy">
             <h1 id="home-title">{t.titleLead}{' '}<span>{t.titleAccent}</span></h1>
             <p className="hero-intro">{t.intro}</p>
-            <a className="reely-jump" href="#reely">{t.reelyTitle}</a>
           </div>
-          {/* The locally hosted illustration uses its intrinsic aspect ratio. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="hero-mascot" src="/mascot/reely.png" alt="" width={640} height={467} />
+          <figure id="reely" className="reely-preview">
+            <video
+              aria-label={t.reelyVideo}
+              autoPlay
+              muted
+              controls
+              playsInline
+              preload="metadata"
+              poster="/mascot/reely-poster.webp"
+              width={1080}
+              height={1920}
+              src="/mascot/reely.mp4"
+            />
+            <figcaption>{t.reelyTitle}</figcaption>
+          </figure>
         </section>
         {featured && (
           <>
@@ -66,20 +77,6 @@ export default function Home() {
             </a>
           ))}
         </div>
-        <section id="reely" className="reely-preview" aria-labelledby="reely-title">
-          <h2 id="reely-title">{t.reelyTitle}</h2>
-          <video
-            aria-label={t.reelyVideo}
-            controls
-            playsInline
-            preload="none"
-            poster="/mascot/reely-poster.webp"
-            width={1080}
-            height={1920}
-          >
-            <source src="/mascot/reely.mp4" type="video/mp4" />
-          </video>
-        </section>
         <HowItWorks steps={HOME_STEPS} />
         <Benefits />
       </main>
