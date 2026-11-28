@@ -99,7 +99,7 @@ export async function resolveYoutubeJob({ id, url, platform }: NonNullable<Retur
     if (queue.filter(item => Date.now() - item.uploaded.getTime() < maxAge).length >= 5) {
       return reply({ error: 'Hay varias descargas de vídeo en curso. Inténtalo en unos segundos.' }, 503);
     }
-    await store.put(pendingKey(id), '');
+    await store.put(pendingKey(id), '', { customMetadata: { sourceUrl: url } });
   }
   return reply({ pending: true }, 202);
 }
@@ -122,7 +122,10 @@ export async function youtubeAgentRequest(request: Request) {
       .sort((a, b) => a.uploaded.getTime() - b.uploaded.getTime());
     for (const candidate of candidates) {
       const id = candidate.key.slice(candidate.key.lastIndexOf('/') + 1);
-      if (!await pauseRemaining(id)) return reply({ id });
+      if (!await pauseRemaining(id)) {
+        const pending = id.startsWith('tt:v:') ? await store.head(candidate.key) : null;
+        return reply({ id, sourceUrl: pending?.customMetadata?.sourceUrl });
+      }
     }
     return reply({ id: null });
   }

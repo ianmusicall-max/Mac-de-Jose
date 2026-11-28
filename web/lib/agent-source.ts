@@ -12,7 +12,9 @@ export function agentSource(url: URL) {
   }
   if (isTikTok(url)) {
     const video = tikTokVideoId(url);
-    if (video) return { id: 'tt:v:' + video, platform: 'TikTok', url: 'https://www.tiktok.com/@i/video/' + video };
+    if (video && /^\d{1,32}$/.test(video)) {
+      return { id: 'tt:v:' + video, platform: 'TikTok', url: 'https://www.tiktok.com' + url.pathname.replace(/\/$/, '') };
+    }
     const short = /^\/([A-Za-z0-9]{4,32})\/?$/.exec(url.pathname)?.[1];
     if (short && (url.hostname === 'vm.tiktok.com' || url.hostname === 'vt.tiktok.com')) {
       return { id: 'tt:' + url.hostname.slice(0, 2) + ':' + short, platform: 'TikTok', url: 'https://' + url.hostname + '/' + short + '/' };

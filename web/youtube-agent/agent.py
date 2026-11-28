@@ -68,9 +68,13 @@ def source_for(video_id):
     return None
 
 
-def prepare(video_id, work):
+def prepare(video_id, work, source_url=None):
     video = work / "video.mp4"
     source = source_for(video_id)
+    if video_id.startswith("tt:v:") and isinstance(source_url, str):
+        match = re.fullmatch(r"https://www\.tiktok\.com/@[A-Za-z0-9_.-]+/video/([0-9]{1,32})", source_url)
+        if match and match[1] == video_id.split(":")[-1]:
+            source = source_url
     if not source:
         return None, "unavailable"
     youtube = ":" not in video_id
@@ -136,13 +140,14 @@ def prepare(video_id, work):
 
 
 def process_queue(endpoint, token):
-    video_id = call(endpoint, token).get("id")
+    job = call(endpoint, token)
+    video_id = job.get("id")
     if not isinstance(video_id, str) or not source_for(video_id):
         return False
 
     with tempfile.TemporaryDirectory(prefix="snapreel-video-") as directory:
         try:
-            video, reason = prepare(video_id, Path(directory))
+            video, reason = prepare(video_id, Path(directory), job.get("sourceUrl"))
         except (OSError, ValueError, subprocess.TimeoutExpired):
             video, reason = None, "unavailable"
         if video:
