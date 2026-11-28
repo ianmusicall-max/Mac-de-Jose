@@ -26,10 +26,12 @@ class NoRedirect(HTTPRedirectHandler):
 opener = build_opener(NoRedirect)
 
 
-def call(endpoint, token, method="GET", *, video_id=None, reason=None, video=None):
+def call(endpoint, token, method="GET", *, video_id=None, reason=None, video=None, title=None):
     params = {"id": video_id} if video_id else {}
     if reason:
         params["reason"] = reason
+    if title:
+        params["title"] = title
     url = endpoint + ("?" + urlencode(params) if params else "")
     headers = {"Authorization": f"Bearer {token}", "User-Agent": "SnapReel-Agent/1.0"}
     if video is None:
@@ -68,32 +70,59 @@ def source_for(video_id):
     return None
 
 
-def prepare(video_id, work, source_url=None):
-    video = work / "video.mp4"
-    source = source_for(video_id)
+def job_source(video_id, source_url):
     if video_id.startswith("tt:v:") and isinstance(source_url, str):
         match = re.fullmatch(r"https://www\.tiktok\.com/@[A-Za-z0-9_.-]+/video/([0-9]{1,32})", source_url)
         if match and match[1] == video_id.split(":")[-1]:
-            source = source_url
+            return source_url
+    return source_for(video_id)
+
+
+def extractor_args(video_id):
+    if ":" not in video_id:
+        return ["--cookies-from-browser", f"firefox:{PROFILE}", "--js-runtimes", f"deno:{BIN / 'deno'}"]
+    extractors = "TikTok.*" if video_id.startswith("tt:") else "Instagram.*,Facebook.*"
+    return ["--use-extractors", extractors]
+
+
+def parse_title(data):
+    try:
+        title = json.loads(data.splitlines()[0])
+    except (ValueError, IndexError):
+        return None
+    return title.strip()[:160] if isinstance(title, str) else None
+
+
+def fetch_title(video_id, source_url):
+    source = job_source(video_id, source_url)
+    result = subprocess.run(
+        [str(BIN / "yt-dlp"), "--ignore-config", *extractor_args(video_id),
+         "--no-playlist", "--socket-timeout", "10", "--retries", "0",
+         "--skip-download", "--print", "%(title)j", "--", source],
+        capture_output=True, timeout=25, check=False,
+    )
+    return parse_title(result.stdout) if result.returncode == 0 else None
+
+
+def prepare(video_id, work, source_url=None):
+    video = work / "video.mp4"
+    source = job_source(video_id, source_url)
     if not source:
         return None, "unavailable"
     youtube = ":" not in video_id
     tiktok = video_id.startswith("tt:")
-    origin_options = [
-        "--cookies-from-browser", f"firefox:{PROFILE}",
-        "--js-runtimes", f"deno:{BIN / 'deno'}",
-    ] if youtube else ["--use-extractors", "TikTok.*" if tiktok else "Instagram.*,Facebook.*"]
     video_format = "best[ext=mp4][protocol=https]"
     if youtube:
         video_format = "b[ext=mp4][vcodec^=avc1][acodec^=mp4a][height<=720]"
     elif tiktok:
         video_format = "best[ext=mp4][protocol=https][vcodec~='^(h264|avc1)']"
     command = [
-        str(BIN / "yt-dlp"), "--ignore-config", *origin_options,
+        str(BIN / "yt-dlp"), "--ignore-config", *extractor_args(video_id),
         "--no-playlist", "--no-progress", "--socket-timeout", "10",
         "--retries", "0", "--fragment-retries", "0", "--abort-on-unavailable-fragments",
         "--max-filesize", str(MAX_BYTES), "--match-filter",
         "!is_live & duration <= 900" if youtube else "!is_live & duration <=? 900",
+        "--no-simulate", "--print-to-file", "after_move:%(title)j", str(work / "title.json"),
         "-f", video_format, "-o", str(video), "--", source,
     ]
     with (work / "download.log").open("w+b") as log:
@@ -146,13 +175,23 @@ def process_queue(endpoint, token):
     if not isinstance(video_id, str) or not source_for(video_id):
         return False
 
+    if job.get("titleOnly") is True:
+        try:
+            title = fetch_title(video_id, job.get("sourceUrl"))
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            title = None
+        call(endpoint, token, "PATCH", video_id=video_id, title=title)
+        return True
+
     with tempfile.TemporaryDirectory(prefix="snapreel-video-") as directory:
         try:
             video, reason = prepare(video_id, Path(directory), job.get("sourceUrl"))
         except (OSError, ValueError, subprocess.TimeoutExpired):
             video, reason = None, "unavailable"
         if video:
-            call(endpoint, token, "PUT", video_id=video_id, video=video)
+            title_file = Path(directory) / "title.json"
+            title = parse_title(title_file.read_bytes()) if title_file.is_file() else None
+            call(endpoint, token, "PUT", video_id=video_id, video=video, title=title)
         else:
             call(endpoint, token, "POST", video_id=video_id, reason=reason)
         print(video_id, "ready" if video else reason, flush=True)

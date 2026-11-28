@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {attachment,dispositionFilename,downloadName,namedDownload,readableFilename} from '../lib/download-name.ts';
+import {attachment,dispositionFilename,downloadName,mediaDownloadName,namedDownload,readableFilename} from '../lib/download-name.ts';
 
 test('gives extensionless CDN videos their actual file extension',()=>{
  assert.equal(downloadName('123456789','video/mp4'),'123456789.mp4');
@@ -32,4 +32,12 @@ test('keeps punctuation and visible words in titles and neutralizes unsafe filen
  assert.equal(namedDownload('../Fiesta\r\nColombia.png','image/jpeg'),'_Fiesta Colombia.jpg');
  assert.equal(readableFilename('7156398672610577666.mp4'),undefined);
  assert.equal(readableFilename('Mi viaje.mp4'),'Mi viaje.mp4');
+});
+
+test('video titles take priority over CDN filenames and keep their UTF-8 spelling', () => {
+  const filename = mediaDownloadName('video/mp4', 'Canción: edición especial', 'video-cache.mp4');
+  assert.equal(filename, 'Canción_ edición especial.mp4');
+  assert.equal(dispositionFilename(attachment(filename)), filename);
+  assert.equal(mediaDownloadName('video/mp4', null, 'Publicación original.mp4'), 'Publicación original.mp4');
+  assert.equal(mediaDownloadName('image/jpeg', 'Foto pública', 'original.jpg'), 'original.jpg');
 });

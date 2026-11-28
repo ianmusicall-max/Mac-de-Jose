@@ -55,3 +55,8 @@ export function attachment(name: string): string {
  const encoded = encodeURIComponent(name).replace(/['()*]/g, char => '%' + char.charCodeAt(0).toString(16).toUpperCase());
  return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 }
+
+export function mediaDownloadName(type: string, title?: string | null, original?: string, fallback = 'SnapReel'): string {
+ const videoTitle = type.trim().toLowerCase().startsWith('video/') ? title?.trim() : undefined;
+ return namedDownload(videoTitle || original || title?.trim() || fallback, type);
+}

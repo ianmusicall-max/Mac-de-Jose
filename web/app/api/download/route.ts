@@ -4,7 +4,7 @@ import {tikTokMediaHeaders} from '@/lib/tiktok';
 import {OriginRateLimitError} from '@/lib/rate-limit';
 import {bucket,storedResponse,storedHeaders,sharedBackoff} from '@/lib/server-storage';
 import {digest} from '@/lib/archive';
-import {attachment,dispositionFilename,namedDownload,readableFilename} from '@/lib/download-name';
+import {attachment,dispositionFilename,mediaDownloadName,namedDownload,readableFilename} from '@/lib/download-name';
 import {readImage,assertCompleteImage,assertFullResponse,IncompleteImageError,MAX_IMAGE_BYTES} from '@/lib/image-file';
 async function cachedFile(id:string,rangeHeader:string|null,inline:boolean,key='files/'+id,title?:string|null):Promise<Response|null>{
  if(rangeHeader){
@@ -55,8 +55,8 @@ export async function GET(request:Request){
   const originalFilename=original&&namedDownload(original,type);
   let basename=new URL(response.url||url).pathname.split('/').pop();
   try { if(basename)basename=decodeURIComponent(basename); } catch { /* Keep the encoded name. */ }
-  const filename=namedDownload(originalFilename||title||readableFilename(basename)||'SnapReel',type);
-  const customMetadata={filename,...(originalFilename?{originalFilename}:{})};
+  const filename=mediaDownloadName(type,title,originalFilename,readableFilename(basename));
+  const customMetadata={filename,...(originalFilename?{originalFilename}:{}),...(type.startsWith('video/')&&title?.trim()?{videoTitle:title.trim().slice(0,160)}:{})};
   if(type.startsWith('image/')){
    const data=await readImage(response);
    await bucket().put('files/'+assetId,data,{httpMetadata:{contentType:type},customMetadata});

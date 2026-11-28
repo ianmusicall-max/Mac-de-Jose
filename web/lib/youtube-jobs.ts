@@ -55,13 +55,23 @@ export async function queuedAgentVideo(id: string) {
   return !!pending && Date.now() - pending.uploaded.getTime() < maxAge;
 }
 
-export async function resolveYoutubeJob({ id, url, platform }: NonNullable<ReturnType<typeof agentSource>>, savedOnly: boolean) {
+async function enqueue(id: string, url: string, titleOnly = false) {
+  const store = bucket();
+  if (await queuedAgentVideo(id)) return true;
+  const queue = await listPending();
+  if (queue.filter(item => Date.now() - item.uploaded.getTime() < maxAge).length >= 5) return false;
+  await store.put(pendingKey(id), '', { customMetadata: { sourceUrl: url, ...(titleOnly ? { titleOnly: '1' } : {}) } });
+  return true;
+}
+
+export async function resolveYoutubeJob({ id, url, platform }: NonNullable<ReturnType<typeof agentSource>>, savedOnly: boolean, existingOnly = false) {
   const fileId = await assetId(id);
   const store = bucket();
-  if (await store.head('youtube/files/' + fileId)) {
+  const file = await store.head('youtube/files/' + fileId);
+  if (file) {
     const titleKey = 'youtube/titles/' + id;
     const storedTitle = await store.get(titleKey);
-    let title = storedTitle ? await storedTitle.text() : '';
+    let title = file.customMetadata?.videoTitle || (storedTitle ? await storedTitle.text() : '');
     if (!title && !savedOnly && platform === 'YouTube') {
       try {
         const endpoint = new URL('https://www.youtube.com/oembed');
@@ -79,10 +89,16 @@ export async function resolveYoutubeJob({ id, url, platform }: NonNullable<Retur
         }
       } catch { /* Keep archived files available when title lookup fails. */ }
     }
+    if (!title && !savedOnly && platform !== 'YouTube' && !await pauseRemaining(id)) {
+      const attempted = await store.head('social/title-attempted/' + id);
+      if ((!attempted || Date.now() - attempted.uploaded.getTime() >= maxAge) && await enqueue(id, url, true)) {
+        return reply({ pending: true }, 202);
+      }
+    }
     title ||= 'Vídeo de ' + platform;
     return reply({ title, items: [{ url, title, kind: 'video', assetId: fileId, isStored: true }], fromArchive: savedOnly });
   }
-  if (savedOnly) return reply({ error: 'No hay archivos guardados para este enlace.' }, 404);
+  if (savedOnly || existingOnly) return reply({ error: 'No hay archivos guardados para este enlace.' }, 404);
   const retryAfter = await pauseRemaining(id);
   if (retryAfter) return reply({ error: platform + ' está limitando las descargas. Vuelve a intentarlo más tarde.', retryAfter }, 429);
 
@@ -93,13 +109,8 @@ export async function resolveYoutubeJob({ id, url, platform }: NonNullable<Retur
       : 'No se pudo preparar el MP4 de este vídeo.' }, 422);
   }
 
-  const pending = await store.head(pendingKey(id));
-  if (!pending || Date.now() - pending.uploaded.getTime() >= maxAge) {
-    const queue = await listPending();
-    if (queue.filter(item => Date.now() - item.uploaded.getTime() < maxAge).length >= 5) {
-      return reply({ error: 'Hay varias descargas de vídeo en curso. Inténtalo en unos segundos.' }, 503);
-    }
-    await store.put(pendingKey(id), '', { customMetadata: { sourceUrl: url } });
+  if (!await enqueue(id, url)) {
+    return reply({ error: 'Hay varias descargas de vídeo en curso. Inténtalo en unos segundos.' }, 503);
   }
   return reply({ pending: true }, 202);
 }
@@ -123,8 +134,8 @@ export async function youtubeAgentRequest(request: Request) {
     for (const candidate of candidates) {
       const id = candidate.key.slice(candidate.key.lastIndexOf('/') + 1);
       if (!await pauseRemaining(id)) {
-        const pending = id.startsWith('tt:v:') ? await store.head(candidate.key) : null;
-        return reply({ id, sourceUrl: pending?.customMetadata?.sourceUrl });
+        const pending = await store.head(candidate.key);
+        return reply({ id, sourceUrl: pending?.customMetadata?.sourceUrl, titleOnly: pending?.customMetadata?.titleOnly === '1' });
       }
     }
     return reply({ id: null });
@@ -133,13 +144,19 @@ export async function youtubeAgentRequest(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get('id') ?? '';
   if (!/^(?:[A-Za-z0-9_-]{11}|ig:[A-Za-z0-9_-]{1,32}|fb:[rv]:\d{1,32}|fb:s[rv]:[A-Za-z0-9]{1,32}|fb:w:[A-Za-z0-9_-]{1,32}|tt:v:\d{1,32}|tt:(?:t|vm|vt):[A-Za-z0-9]{4,32})$/.test(id) || !await store.head(pendingKey(id))) return reply({}, 404);
-  if (request.method === 'PUT') {
+  const title = url.searchParams.get('title')?.trim().slice(0, 160);
+  if (request.method === 'PATCH') {
+    const pending = await store.head(pendingKey(id));
+    if (pending?.customMetadata?.titleOnly !== '1') return reply({}, 404);
+    if (title) await store.put('youtube/titles/' + id, title);
+    else await store.put('social/title-attempted/' + id, '');
+  } else if (request.method === 'PUT') {
     const length = Number(request.headers.get('Content-Length'));
     if (!request.body || !Number.isSafeInteger(length) || length <= 0 || length > maxBytes ||
         request.headers.get('Content-Type') !== 'video/mp4') return reply({}, 400);
     await store.put('youtube/files/' + await assetId(id), request.body.pipeThrough(new FixedLengthStream(length)), {
       httpMetadata: { contentType: 'video/mp4' },
-      customMetadata: { filename: (id.includes(':') ? id.replaceAll(':', '-') : 'youtube-' + id) + '.mp4' },
+      customMetadata: { filename: (id.includes(':') ? id.replaceAll(':', '-') : 'youtube-' + id) + '.mp4', ...(title ? { videoTitle: title } : {}) },
     });
   } else if (request.method === 'POST') {
     const reason = url.searchParams.get('reason') ?? '';

@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       return await resolveYoutubeJob(source, savedOnly);
     }
     if (source) {
-      const stored = await resolveYoutubeJob(source, true);
+      const stored = await resolveYoutubeJob(source, savedOnly, true);
       if (stored.ok) return stored;
       if (!savedOnly && await queuedAgentVideo(source.id)) return await resolveYoutubeJob(source, false);
     }
