@@ -57,6 +57,11 @@ function readHistory(): HistoryEntry[] {
   }
 }
 
+function youtubePoster(link: string): Media | undefined {
+  const id = youtubeVideoId(new URL(link));
+  return id ? { url: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`, kind: 'image', title: '' } : undefined;
+}
+
 function startDownload(href: string) {
   const anchor = document.createElement('a');
   anchor.href = href;
@@ -402,11 +407,12 @@ export function Downloader({
           </div>
           {visibleHistory.map(entry => {
             const canDownload = formats.includes('video') && (!entry.kind || entry.kind === 'video');
+            const poster = entry.poster ?? youtubePoster(entry.link);
             return (
               <div className="recent-link" key={entry.link}>
-                {entry.poster ? (
+                {poster ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img className="recent-thumb" src={mediaFileUrl(entry.poster, true)} alt="" loading="lazy" />
+                  <img className="recent-thumb" src={mediaFileUrl(poster, true)} alt="" loading="lazy" />
                 ) : <Link2 size={16} aria-hidden="true" />}
                 <span>
                   <strong>{entry.title || entry.link}</strong>
