@@ -161,3 +161,18 @@ Las descargas de imágenes validan longitud y los cierres de JPEG/PNG/GIF/WebP.
 Las respuestas HTTP 206 incompletas se rechazan. Una imagen rota ya guardada no
 se vuelve a servir como completa; se intenta obtener de nuevo desde su enlace.
 Las vistas previas usan object-fit: contain para mostrar todo el encuadre.
+
+## Extractor del agente
+
+El agente requiere Python 3.11 o posterior para ejecutar `yt-dlp`. Para
+instalar la versión verificada en el mismo directorio `bin` que utiliza el
+agente, ejecuta desde `web/`:
+
+```sh
+./youtube-agent/install-ytdlp.sh /opt/videovault/bin
+```
+
+En una instalación con el servicio `snapreel-youtube-agent.service`, usa
+`/opt/snapreel/bin` como destino. El instalador verifica la huella SHA-256,
+conserva una copia del extractor anterior si lo reemplaza y el agente utiliza
+el nuevo ejecutable en la siguiente descarga con su perfil de navegador actual.
