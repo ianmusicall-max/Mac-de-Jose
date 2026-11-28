@@ -32,7 +32,6 @@ export const strings = {
       reelyVideo: 'SnapReel’s 15-second Reely video',
       titleAccent: 'YouTube, Instagram, TikTok and Facebook',
       intro: "Choose the platform and paste the post's link.",
-      featuredLabel: 'Most reliable',
       otherPlatforms: 'Other platforms',
       open: (name: string) => `Open ${name}`,
       platforms: {
@@ -189,7 +188,6 @@ export const strings = {
       reelyVideo: 'Anuncio de Reely para SnapReel, 15 segundos',
       titleAccent: 'YouTube, Instagram, TikTok y Facebook',
       intro: 'Elige la plataforma y pega el enlace de la publicación.',
-      featuredLabel: 'La más fiable',
       otherPlatforms: 'Otras plataformas',
       open: (name: string) => `Abrir ${name}`,
       platforms: {
@@ -346,7 +344,6 @@ export const strings = {
       reelyVideo: 'Vídeo de 15 segundos do Reely para o SnapReel',
       titleAccent: 'YouTube, Instagram, TikTok e Facebook',
       intro: 'Escolha a plataforma e cole o link da publicação.',
-      featuredLabel: 'A mais confiável',
       otherPlatforms: 'Outras plataformas',
       open: (name: string) => `Abrir ${name}`,
       platforms: {
