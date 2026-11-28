@@ -28,7 +28,7 @@ export function ReelyVideo({ locale, label }: { locale: Locale; label: string })
         onSeeked={updateScene}
       />
       {english && (
-        <div className="reely-english-overlays" aria-hidden="true">
+        <div className="reely-english-overlays">
           {scene < 3 && <span className="reely-copy reely-copy-phone">Can’t save this video 😩</span>}
           {scene >= 4 && scene < 7 && (
             <span className="reely-copy reely-copy-headline">Paste the link.<br />Reely downloads it.</span>

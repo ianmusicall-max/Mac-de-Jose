@@ -91,23 +91,23 @@ h1 > span {
 .reely-copy-phone {
   left: 55%;
   top: 51.2%;
-  width: 38%;
+  width: 33%;
   height: 10.5%;
   transform: rotate(-8deg);
   border-radius: 3cqw;
   background: #f0f6f1;
   color: #173c2c;
-  font-size: 4.3cqw;
+  font-size: 3.4cqw;
 }
 
 .reely-copy-headline {
   left: 6%;
-  top: 16.5%;
+  top: 16.8%;
   width: 88%;
-  height: 15%;
+  height: 10.5%;
   background: #f3faf5;
   color: #173c2c;
-  font-size: 7.3cqw;
+  font-size: 7cqw;
   letter-spacing: -0.045em;
 }
 
@@ -115,7 +115,7 @@ h1 > span {
 .reely-copy-download-left {
   top: 59.6%;
   width: 29%;
-  height: 5.3%;
+  height: 4%;
   transform: rotate(-8deg);
   border-radius: 3cqw;
   background: #214b38;
@@ -124,16 +124,16 @@ h1 > span {
 }
 
 .reely-copy-download-right { left: 60%; }
-.reely-copy-download-left { left: 31%; }
+.reely-copy-download-left { left: 16.5%; }
 
 .reely-copy-outro {
-  left: 23%;
-  top: 86.8%;
-  width: 55%;
+  left: 30%;
+  top: 87%;
+  width: 40%;
   height: 4.8%;
   background: #214b38;
   color: #d8f0dc;
-  font-size: 4.4cqw;
+  font-size: 4cqw;
 }
 
 .reely-copy-cta {
