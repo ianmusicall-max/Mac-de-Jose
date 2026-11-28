@@ -83,10 +83,11 @@ def prepare(video_id, work, source_url=None):
         "--cookies-from-browser", f"firefox:{PROFILE}",
         "--js-runtimes", f"deno:{BIN / 'deno'}",
     ] if youtube else ["--use-extractors", "TikTok.*" if tiktok else "Instagram.*,Facebook.*"]
-    video_format = (
-        "b[ext=mp4][vcodec^=avc1][acodec^=mp4a][height<=720]"
-        if youtube else "best[ext=mp4][protocol=https]"
-    )
+    video_format = "best[ext=mp4][protocol=https]"
+    if youtube:
+        video_format = "b[ext=mp4][vcodec^=avc1][acodec^=mp4a][height<=720]"
+    elif tiktok:
+        video_format = "best[ext=mp4][protocol=https][vcodec~='^(h264|avc1)']"
     command = [
         str(BIN / "yt-dlp"), "--ignore-config", *origin_options,
         "--no-playlist", "--no-progress", "--socket-timeout", "10",
