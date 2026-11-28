@@ -8,6 +8,7 @@ import { Benefits } from '@/components/sections/benefits';
 import { HOME_STEPS, toolByPath } from '@/lib/tools';
 import { useLocale } from '@/lib/i18n/locale-context';
 import { strings } from '@/lib/i18n/strings';
+import { ReelyVideo } from '@/components/reely-video';
 
 /**
  * The home page carries YouTube's own downloader rather than a link to it:
@@ -38,18 +39,7 @@ export default function Home() {
             <p className="hero-intro">{t.intro}</p>
           </div>
           <figure id="reely" className="reely-preview">
-            <video
-              aria-label={t.reelyVideo}
-              autoPlay
-              muted
-              controls
-              playsInline
-              preload="metadata"
-              poster="/mascot/reely-poster.webp"
-              width={1080}
-              height={1920}
-              src="/mascot/reely.mp4"
-            />
+            <ReelyVideo locale={locale} label={t.reelyVideo} />
             <figcaption>{t.reelyTitle}</figcaption>
           </figure>
         </section>
