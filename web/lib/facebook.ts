@@ -152,7 +152,7 @@ export async function resolveFacebook(
       const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
       await response.body?.cancel();
       if (response.ok && type === 'video/mp4' && facebookCdn(response.url || url)) {
-        return { url, kind: 'video', title, quality, mediaKey: `facebook-${quality ?? 'mp4'}` };
+        return { url, kind: 'video', contentType: 'video/mp4', title, quality, mediaKey: `facebook-${quality ?? 'mp4'}` };
       }
     } catch (error) {
       if (error instanceof OriginRateLimitError) throw error;

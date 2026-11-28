@@ -54,7 +54,7 @@ export async function resolveYouTube(
       const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
       await response.body?.cancel();
       if (response.ok && type === 'video/mp4') {
-        return { title, items: [{ url: url.href, kind: 'video', title }] };
+        return { title, items: [{ url: url.href, kind: 'video', contentType: 'video/mp4', title }] };
       }
     } catch (error) {
       if (error instanceof OriginRateLimitError) throw error;

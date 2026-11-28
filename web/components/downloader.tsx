@@ -4,7 +4,10 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowUpRight, Film, ImageIcon, Link2, LoaderCircle, Music2, Clock3 } from 'lucide-react';
 import { publicUrl, type Media } from '@/lib/media';
 import { isTikTok, TIKTOK_MP4_UNAVAILABLE } from '@/lib/tiktok';
+import { youtubeVideoId } from '@/lib/youtube';
+import { isFacebook } from '@/lib/facebook';
 import { mediaOptions, selectionMessage } from '@/lib/media-selection';
+import { mediaFileUrl } from '@/lib/album';
 import { AlbumDownloadButton } from '@/components/image-download';
 import { ResultCard } from '@/components/result-card';
 import { cooldownOrigin as originOf, readCooldown } from '@/lib/cooldown';
@@ -28,14 +31,39 @@ type ResolveResponse = {
   albumWarning?: string;
 };
 
-function readHistory(): string[] {
+type HistoryEntry = { link: string; title?: string; poster?: Media; video?: Media; kind?: Media['kind'] };
+type SearchPhase = 'idle' | 'searching' | 'preparing' | 'pending' | 'ready';
+
+function readHistory(): HistoryEntry[] {
   try {
     const stored: unknown = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
     if (!Array.isArray(stored)) return [];
-    return stored.filter((entry): entry is string => typeof entry === 'string').slice(0, HISTORY_SIZE);
+    return stored.flatMap((entry): HistoryEntry[] => {
+      const link = typeof entry === 'string' ? entry : entry?.link;
+      try { publicUrl(link); } catch { return []; }
+      if (typeof entry === 'string') return [{ link: entry }];
+      if (!entry || typeof entry.link !== 'string') return [];
+      const { title, poster, video, kind } = entry;
+      return [{
+        link,
+        title: typeof title === 'string' ? title : undefined,
+        poster: poster?.kind === 'image' && typeof poster.url === 'string' ? poster : undefined,
+        video: video?.kind === 'video' && typeof video.url === 'string' && typeof video.assetId === 'string' ? video : undefined,
+        kind: KINDS.find(option => option === kind),
+      }];
+    }).slice(0, HISTORY_SIZE);
   } catch {
     return [];
   }
+}
+
+function startDownload(href: string) {
+  const anchor = document.createElement('a');
+  anchor.href = href;
+  anchor.download = '';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }
 
 export function Downloader({
@@ -55,7 +83,8 @@ export function Downloader({
 
   const [url, setUrl] = useState('');
   const [selected, setSelected] = useState<Media['kind']>(defaultKind);
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<SearchPhase>('idle');
+  const busy = phase === 'searching' || phase === 'preparing';
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
   const [tiktokFallback, setTikTokFallback] = useState('');
@@ -64,7 +93,7 @@ export function Downloader({
   const [sourceWarning, setSourceWarning] = useState('');
   const [albumWarning, setAlbumWarning] = useState('');
   const [fromArchive, setFromArchive] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [cooldown, setCooldown] = useState<{ origin: string; until: number } | null>(null);
   const [now, setNow] = useState(0);
   const [resultSource, setResultSource] = useState('');
@@ -93,6 +122,13 @@ export function Downloader({
 
   const waiting =
     cooldown?.origin === originOf(url) ? Math.max(0, Math.ceil((cooldown.until - now) / 1000)) : 0;
+  const visibleHistory = history.filter(entry => {
+    const link = new URL(entry.link);
+    if (platform === 'tiktok') return isTikTok(link);
+    if (platform === 'youtube') return Boolean(youtubeVideoId(link));
+    if (platform === 'facebook') return isFacebook(link);
+    return true;
+  });
   const options = mediaOptions(items);
   const visible = options.filter(item => item.kind === selected);
   const notice =
@@ -102,8 +138,14 @@ export function Downloader({
         : selectionMessage(items, selected, selectionText)
       : null;
 
-  function remember(link: string) {
-    const next = [link, ...history.filter(entry => entry !== link)].slice(0, HISTORY_SIZE);
+  function remember(link: string, data: ResolveResponse, kind: Media['kind']) {
+    if (!data.items.length) return;
+    const poster = data.items.find(item => item.kind === 'image' && item.isPreview)
+      ?? data.items.find(item => item.kind === 'image');
+    const video = data.items.find(item => item.kind === 'video' && item.isStored && item.assetId);
+    const previous = history.find(entry => entry.link === link);
+    const next = [{ link, title: data.title || previous?.title, poster: poster ?? previous?.poster,
+      video: video ?? previous?.video, kind }, ...history.filter(entry => entry.link !== link)].slice(0, HISTORY_SIZE);
     setHistory(next);
     try {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
@@ -112,14 +154,19 @@ export function Downloader({
     }
   }
 
-  async function detect(event: FormEvent, refresh = false) {
+  async function detect(event: FormEvent, refresh = false, downloadLink?: string) {
     event.preventDefault();
     if (busy) return;
-    const link = url.trim();
+    const link = (downloadLink ?? url).trim();
+    const requestedKind = downloadLink ? 'video' : selected;
+    if (downloadLink) {
+      setUrl(link);
+      setSelected(requestedKind);
+    }
     const instagram = originOf(link) === 'https://www.instagram.com';
-    let savedOnly = instagram && waiting > 0;
+    let savedOnly = instagram && cooldown?.origin === originOf(link) && cooldown.until > Date.now();
 
-    setBusy(true);
+    setPhase('searching');
     setError('');
     setTikTokFallback('');
     let sameSource = false;
@@ -137,17 +184,21 @@ export function Downloader({
       const request = (fromSaved = savedOnly) => fetch('/api/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: link, refresh: refresh && !fromSaved, kind: selected, platform, savedOnly: fromSaved }),
+        body: JSON.stringify({ url: link, refresh: refresh && !fromSaved, kind: requestedKind, platform, savedOnly: fromSaved }),
       });
       const deadline = Date.now() + 120_000;
       let response = await request();
       let data = (await response.json()) as ResolveResponse;
       while (response.status === 202 && data.pending && Date.now() < deadline) {
+        setPhase('preparing');
         await new Promise(resolve => setTimeout(resolve, 4000));
         response = await request();
         data = (await response.json()) as ResolveResponse;
       }
-      if (data.pending) throw new Error(t.pending);
+      if (data.pending) {
+        setPhase('pending');
+        return;
+      }
 
       if (data.retryAfter || response.status === 429) {
         const current = Date.now();
@@ -179,11 +230,14 @@ export function Downloader({
       setSourceWarning(data.warning || '');
       setFromArchive(!!data.fromArchive);
       setSearched(true);
-      remember(link);
+      remember(link, data, requestedKind);
+      const video = data.items.find(item => item.kind === 'video');
+      const hasResult = mediaOptions(data.items).some(item => item.kind === requestedKind);
+      setPhase(hasResult ? 'ready' : 'idle');
+      if (downloadLink && video) startDownload(mediaFileUrl(video));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t.connectError);
-    } finally {
-      setBusy(false);
+      setPhase('idle');
     }
   }
 
@@ -209,17 +263,20 @@ export function Downloader({
             required
             placeholder={placeholder}
             value={url}
-            onChange={event => setUrl(event.target.value)}
+            onChange={event => {
+              setUrl(event.target.value);
+              setPhase('idle');
+            }}
             disabled={busy}
           />
           <button disabled={busy} type="submit">
             {busy ? (
               <>
-                <LoaderCircle className="spin" size={18} /> {t.searching}
+                <LoaderCircle className="spin" size={18} /> {t.search(t.kindLabel[selected])}
               </>
             ) : (
               <>
-                {waiting > 0 && originOf(url) === 'https://www.instagram.com' ? t.searchSaved : t.search(t.kindLabel[selected])} <ArrowUpRight size={18} />
+                {phase === 'pending' ? t.checkAgain : waiting > 0 && originOf(url) === 'https://www.instagram.com' ? t.searchSaved : t.search(t.kindLabel[selected])} <ArrowUpRight size={18} />
               </>
             )}
           </button>
@@ -240,7 +297,8 @@ export function Downloader({
                     name="format"
                     value={option}
                     checked={selected === option}
-                    onChange={() => setSelected(option)}
+                    disabled={busy}
+                    onChange={() => { setSelected(option); setPhase('idle'); }}
                   />
                   <Icon size={15} />
                   {t.kindSingular[option]}
@@ -261,6 +319,12 @@ export function Downloader({
           </small>
         )}
       </form>
+
+      {phase !== 'idle' && (
+        <p role="status" className="lookup-status">
+          {phase === 'searching' ? t.searching : phase === 'preparing' ? t.preparingVideo : phase === 'pending' ? t.pending : t.ready}
+        </p>
+      )}
 
       {selected === 'image' && searched && (
         <div className="image-toolbar">
@@ -307,7 +371,7 @@ export function Downloader({
               <h2>{t.available(t.kindTitle[selected])}</h2>
               <span>{t.found(visible.length)}</span>
             </div>
-            <p className="result-title">{title}</p>
+            {visible.length > 1 && <p className="result-title">{title}</p>}
             {visible.map((item, index) => (
               <ResultCard
                 key={`${item.albumIndex || 0}:${item.kind}:${item.url}`}
@@ -326,7 +390,7 @@ export function Downloader({
         )}
       </div>
 
-      {history.length > 0 && (
+      {visibleHistory.length > 0 && (
         <section className="recent">
           <div className="section-heading">
             <h2>
@@ -336,13 +400,34 @@ export function Downloader({
               {t.clearHistory}
             </button>
           </div>
-          {history.map(link => (
-            <button key={link} className="recent-link" onClick={() => setUrl(link)}>
-              <Link2 size={15} />
-              <span>{link}</span>
-              <ArrowUpRight size={15} />
-            </button>
-          ))}
+          {visibleHistory.map(entry => {
+            const canDownload = formats.includes('video') && (!entry.kind || entry.kind === 'video');
+            return (
+              <div className="recent-link" key={entry.link}>
+                {entry.poster ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="recent-thumb" src={mediaFileUrl(entry.poster, true)} alt="" loading="lazy" />
+                ) : <Link2 size={16} aria-hidden="true" />}
+                <span>
+                  <strong>{entry.title || entry.link}</strong>
+                  {entry.title && <small>{entry.link}</small>}
+                </span>
+                {canDownload && entry.video ? (
+                  <a className="text-button recent-action" href={mediaFileUrl(entry.video)}>{t.downloadAgain}</a>
+                ) : (
+                  <button type="button" className="text-button recent-action" disabled={busy}
+                    onClick={event => {
+                      if (canDownload) return detect(event, false, entry.link);
+                      setUrl(entry.link);
+                      setPhase('idle');
+                      if (entry.kind && formats.includes(entry.kind)) setSelected(entry.kind);
+                    }}>
+                    {canDownload ? t.downloadAgain : t.reuseLink}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </section>
       )}
     </>

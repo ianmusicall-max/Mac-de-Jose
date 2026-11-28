@@ -32,6 +32,8 @@ export function ResultCard({
   const t = strings[locale].resultCard;
   const kindLabel = strings[locale].downloader.kindLabel;
   const Icon = KIND_ICON[item.kind];
+  const isMp4 = item.contentType === 'video/mp4' || /\.mp4$/i.test(new URL(item.url).pathname);
+  const size = item.size && new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(item.size / 1024 ** 2);
   const dimensions = item.width && item.height ? ` · ${item.width}×${item.height}` : '';
 
   return (
@@ -48,18 +50,16 @@ export function ResultCard({
         <h3>{item.title || t.file(position)}</h3>
         <small>
           {describe(item, t)}{item.quality && ` · ${item.quality}`} · {new URL(item.url).hostname}
-          {dimensions}
+          {dimensions}{size ? ` · ${size} MB` : ''}
         </small>
       </div>
-
-      {item.kind === 'video' && <VideoPreview item={item} poster={poster} />}
 
       {item.derivedFromVideo ? (
         <AudioDownloadButton item={item} />
       ) : item.kind === 'image' ? (
         <ImageDownloadButton item={item} />
       ) : item.kind === 'video' ? (
-        <VideoDownload key={mediaFileUrl(item)} href={mediaFileUrl(item)}>
+        <VideoDownload key={mediaFileUrl(item)} href={mediaFileUrl(item)} isMp4={isMp4}>
           {offerAudio && <AudioDownloadButton item={item} />}
         </VideoDownload>
       ) : (
@@ -67,6 +67,7 @@ export function ResultCard({
           <ArrowDownToLine size={17} /> {t.download(kindLabel[item.kind])}
         </a>
       )}
+      {item.kind === 'video' && <VideoPreview item={item} poster={poster} />}
     </article>
   );
 }

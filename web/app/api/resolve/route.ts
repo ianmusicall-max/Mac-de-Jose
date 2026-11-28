@@ -69,7 +69,7 @@ async function resolve(url: string) {
     await response.body?.cancel();
     let title = new URL(url).pathname.split('/').pop() || 'archivo';
     try { title = decodeURIComponent(title); } catch { /* Keep raw filename. */ }
-    return { title: new URL(url).hostname, items: [{url, kind:k, title}] };
+    return { title: new URL(url).hostname, items: [{url, kind:k, title, contentType: type.split(';')[0].trim()}] };
   }
   if (!type.includes('text/html')) {
     await response.body?.cancel();

@@ -25,7 +25,7 @@ test('devuelve el MP4 directo después de comprobar su tipo de contenido', async
     assert.equal(url, mp4);
     return new Response(null, { status: 206, headers: { 'Content-Type': 'video/mp4' } });
   });
-  assert.deepEqual(result.items, [{ url: mp4, kind: 'video', title: 'Vídeo de prueba' }]);
+  assert.deepEqual(result.items, [{ url: mp4, kind: 'video', contentType: 'video/mp4', title: 'Vídeo de prueba' }]);
 });
 
 test('omite formatos cifrados, hosts ajenos y vídeos que requieren iniciar sesión', async () => {

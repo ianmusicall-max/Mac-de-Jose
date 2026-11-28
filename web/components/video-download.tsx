@@ -6,7 +6,7 @@ import { dispositionFilename, namedDownload } from '@/lib/download-name';
 import { useLocale } from '@/lib/i18n/locale-context';
 import { strings } from '@/lib/i18n/strings';
 
-export function VideoDownload({ href, children }: { href: string; children?: ReactNode }) {
+export function VideoDownload({ href, isMp4, children }: { href: string; isMp4: boolean; children?: ReactNode }) {
   const { locale } = useLocale();
   const t = strings[locale].videoDownload;
   const [file, setFile] = useState<File>();
@@ -56,9 +56,9 @@ export function VideoDownload({ href, children }: { href: string; children?: Rea
     <div className="video-download">
       <div className="video-download-actions">
         <a className="download" href={href}>
-          <ArrowDownToLine size={17} /> {t.downloadVideo}
+          <ArrowDownToLine size={17} /> {isMp4 ? t.downloadMp4 : t.downloadVideo}
         </a>
-        <button className="download" type="button" disabled={busy} onClick={saveToPhotos}>
+        <button className="download secondary-download" type="button" disabled={busy} onClick={saveToPhotos}>
           <Share size={17} /> {busy && !file ? t.preparing : file ? t.shareVideo : t.saveToPhotos}
         </button>
         {children}

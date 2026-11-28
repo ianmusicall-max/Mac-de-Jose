@@ -405,3 +405,68 @@ button:disabled {
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
+
+.lookup-status {
+  color: var(--ink-accent);
+  font-size: 14px;
+  margin: 12px 0 0;
+}
+
+.recent-link > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.recent-link strong,
+.recent-link small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-link strong {
+  font-size: 14px;
+  color: var(--ink-accent);
+}
+
+.recent-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.recent-action {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.preview-details {
+  grid-column: 1 / -1;
+  color: var(--ink-accent);
+  font-size: 14px;
+}
+
+.preview-details summary {
+  cursor: pointer;
+  padding-block: 6px;
+}
+
+.preview-details[open] .video-preview {
+  margin-top: 8px;
+}
+
+.video-download-actions {
+  justify-content: flex-start;
+}
+
+.video-download-actions .download {
+  min-height: 44px;
+  font-size: 13px;
+}
+
+.video-download-actions button.download {
+  border: 1px solid var(--line);
+  background: var(--surface-selected);
+  color: var(--ink-accent);
+}

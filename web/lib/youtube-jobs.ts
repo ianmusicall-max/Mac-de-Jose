@@ -96,7 +96,7 @@ export async function resolveYoutubeJob({ id, url, platform }: NonNullable<Retur
       }
     }
     title ||= 'Vídeo de ' + platform;
-    return reply({ title, items: [{ url, title, kind: 'video', assetId: fileId, isStored: true }], fromArchive: savedOnly });
+    return reply({ title, items: [{ url, title, kind: 'video', contentType: 'video/mp4', size: file.size, assetId: fileId, isStored: true }], fromArchive: savedOnly });
   }
   if (savedOnly || existingOnly) return reply({ error: 'No hay archivos guardados para este enlace.' }, 404);
   const retryAfter = await pauseRemaining(id);

@@ -8,14 +8,17 @@ export function VideoPreview({ item, poster }: { item: Media; poster?: Media }) 
   const { locale } = useLocale();
   const t = strings[locale].videoPreview;
   return (
-    <video
-      className="video-preview"
-      controls
-      playsInline
-      preload="metadata"
-      src={mediaFileUrl(item, true)}
-      poster={poster ? mediaFileUrl(poster, true) : undefined}
-      aria-label={t.label(item.title || t.fallbackTitle)}
-    />
+    <details className="preview-details">
+      <summary>{strings[locale].videoDownload.preview}</summary>
+      <video
+        className="video-preview"
+        controls
+        playsInline
+        preload="none"
+        src={mediaFileUrl(item, true)}
+        poster={poster ? mediaFileUrl(poster, true) : undefined}
+        aria-label={t.label(item.title || t.fallbackTitle)}
+      />
+    </details>
   );
 }

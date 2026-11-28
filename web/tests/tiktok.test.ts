@@ -18,7 +18,7 @@ test('resuelve un MP4 publicado y conserva la URL firmada', async () => {
     assert.equal(candidate, url);
     return new Response(null, { status: 206, headers: { 'Content-Type': 'video/mp4' } });
   });
-  assert.deepEqual(result, { title: 'Mi vídeo', items: [{ url, kind: 'video', title: 'Mi vídeo' }] });
+  assert.deepEqual(result, { title: 'Mi vídeo', items: [{ url, kind: 'video', contentType: 'video/mp4', title: 'Mi vídeo' }] });
 });
 
 test('prueba otro archivo cuando la primera versión no es MP4', async () => {
