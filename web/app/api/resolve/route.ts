@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
-import { resolveYoutubeJob } from '@/lib/youtube-jobs';
+import { queuedAgentVideo, resolveYoutubeJob } from '@/lib/youtube-jobs';
+import { agentSource } from '@/lib/agent-source';
 import { remote, kind, boundedText, publicUrl } from '@/lib/media';
 import { OriginRateLimitError } from '@/lib/rate-limit';
 import { resolveInstagram, instagramPost } from '@/lib/instagram';
@@ -102,16 +103,35 @@ export async function POST(request: Request) {
       throw new Error('Pega un enlace de un vídeo o Short de YouTube.');
     }
     if (youtube) url = new URL(`https://www.youtube.com/watch?v=${youtube}`);
-    if (youtube && env.YOUTUBE_AGENT_TOKEN && payload.kind !== 'image') {
-      return await resolveYoutubeJob(youtube, url.href, payload.savedOnly === true);
+    const source = env.YOUTUBE_AGENT_TOKEN && payload.kind !== 'image' ? agentSource(url) : undefined;
+    const savedOnly = payload.savedOnly === true;
+    if (source?.platform === 'YouTube' || source?.platform === 'Facebook') {
+      return await resolveYoutubeJob(source, savedOnly);
     }
-    if(payload.savedOnly===true){
-      const result=await service.resolveSaved(url.href);
+    if (source) {
+      const stored = await resolveYoutubeJob(source, true);
+      if (stored.ok) return stored;
+      if (!savedOnly && await queuedAgentVideo(source.id)) return await resolveYoutubeJob(source, false);
+    }
+    if (savedOnly) {
+      const result = await service.resolveSaved(url.href);
       return result
-        ? Response.json(result,{headers:{'Cache-Control':'no-store'}})
-        : Response.json({error:'No hay archivos guardados para este enlace.'},{status:404,headers:{'Cache-Control':'no-store'}});
+        ? Response.json(result, { headers: { 'Cache-Control': 'no-store' } })
+        : Response.json({ error: 'No hay archivos guardados para este enlace.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
     }
-    return Response.json(await service.resolve(url.href,!!payload.refresh,payload.kind==='image'), {headers:{'Cache-Control':'no-store'}});
+
+    let result;
+    try {
+      result = await service.resolve(url.href, !!payload.refresh, payload.kind === 'image');
+    } catch (error) {
+      if (!source) throw error;
+      return await resolveYoutubeJob(source, false);
+    }
+    if (source && !result.items.some(item => item.kind === 'video')) {
+      const fallback = await resolveYoutubeJob(source, false);
+      if (fallback.ok || !result.items.length) return fallback;
+    }
+    return Response.json(result, { headers: { 'Cache-Control': 'no-store' } });
   } catch (e) {
     const limited = e instanceof OriginRateLimitError;
     return Response.json({error:e instanceof Error?e.message:'No se pudo analizar el enlace.', ...(limited?{retryAfter:e.retryAfter}:{})}, {

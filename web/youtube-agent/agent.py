@@ -1,4 +1,4 @@
-"""Prepare queued public YouTube videos and send MP4 files to SnapReel."""
+"""Prepare queued public videos and send MP4 files to SnapReel."""
 
 import json
 import os
@@ -12,11 +12,10 @@ import time
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-ENDPOINT = os.environ["SNAPREEL_YOUTUBE_ENDPOINT"]
-TOKEN = os.environ["SNAPREEL_YOUTUBE_TOKEN"]
-PROFILE = os.environ["SNAPREEL_FIREFOX_PROFILE"]
+PROFILE = os.environ.get("SNAPREEL_FIREFOX_PROFILE") or os.environ["VIDEOVAULT_FIREFOX_PROFILE"]
 MAX_BYTES = 40 * 1024 * 1024
-BIN = Path("/opt/snapreel/bin")
+BIN = Path(__file__).resolve().parents[1] / "bin"
+QUEUE_PREFIXES = ("SNAPREEL_YOUTUBE", "SNAPREEL_AGENT", "VIDEOVAULT_YOUTUBE", "VIDEOVAULT_SOCIAL")
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -27,12 +26,12 @@ class NoRedirect(HTTPRedirectHandler):
 opener = build_opener(NoRedirect)
 
 
-def call(method="GET", *, video_id=None, reason=None, video=None):
+def call(endpoint, token, method="GET", *, video_id=None, reason=None, video=None):
     params = {"id": video_id} if video_id else {}
     if reason:
         params["reason"] = reason
-    url = ENDPOINT + ("?" + urlencode(params) if params else "")
-    headers = {"Authorization": f"Bearer {TOKEN}", "User-Agent": "SnapReel-YouTube-Agent/1.0"}
+    url = endpoint + ("?" + urlencode(params) if params else "")
+    headers = {"Authorization": f"Bearer {token}", "User-Agent": "SnapReel-Agent/1.0"}
     if video is None:
         with opener.open(Request(url, method=method, headers=headers), timeout=15) as response:
             return json.load(response)
@@ -47,17 +46,50 @@ def limit_output():
     resource.setrlimit(resource.RLIMIT_FSIZE, (MAX_BYTES, MAX_BYTES))
 
 
+def source_for(video_id):
+    if re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+        return "https://www.youtube.com/watch?v=" + video_id
+    if match := re.fullmatch(r"ig:([A-Za-z0-9_-]{1,32})", video_id):
+        return "https://www.instagram.com/p/" + match[1] + "/"
+    if match := re.fullmatch(r"fb:r:(\d{1,32})", video_id, re.ASCII):
+        return "https://www.facebook.com/reel/" + match[1] + "/"
+    if match := re.fullmatch(r"fb:v:(\d{1,32})", video_id, re.ASCII):
+        return "https://www.facebook.com/watch/?v=" + match[1]
+    if match := re.fullmatch(r"fb:s([rv]):([A-Za-z0-9]{1,32})", video_id):
+        return "https://www.facebook.com/share/" + match[1] + "/" + match[2] + "/"
+    if match := re.fullmatch(r"fb:w:([A-Za-z0-9_-]{1,32})", video_id):
+        return "https://fb.watch/" + match[1] + "/"
+    if match := re.fullmatch(r"tt:v:(\d{1,32})", video_id, re.ASCII):
+        return "https://www.tiktok.com/@i/video/" + match[1]
+    if match := re.fullmatch(r"tt:(vm|vt):([A-Za-z0-9]{4,32})", video_id):
+        return "https://" + match[1] + ".tiktok.com/" + match[2] + "/"
+    if match := re.fullmatch(r"tt:t:([A-Za-z0-9]{4,32})", video_id):
+        return "https://www.tiktok.com/t/" + match[1] + "/"
+    return None
+
+
 def prepare(video_id, work):
     video = work / "video.mp4"
-    command = [
-        str(BIN / "yt-dlp"), "--ignore-config",
+    source = source_for(video_id)
+    if not source:
+        return None, "unavailable"
+    youtube = ":" not in video_id
+    tiktok = video_id.startswith("tt:")
+    origin_options = [
         "--cookies-from-browser", f"firefox:{PROFILE}",
         "--js-runtimes", f"deno:{BIN / 'deno'}",
+    ] if youtube else ["--use-extractors", "TikTok.*" if tiktok else "Instagram.*,Facebook.*"]
+    video_format = (
+        "b[ext=mp4][vcodec^=avc1][acodec^=mp4a][height<=720]"
+        if youtube else "best[ext=mp4][protocol=https]"
+    )
+    command = [
+        str(BIN / "yt-dlp"), "--ignore-config", *origin_options,
         "--no-playlist", "--no-progress", "--socket-timeout", "10",
         "--retries", "0", "--fragment-retries", "0", "--abort-on-unavailable-fragments",
-        "--max-filesize", str(MAX_BYTES), "--match-filter", "!is_live & duration <= 900",
-        "-f", "b[ext=mp4][vcodec^=avc1][acodec^=mp4a][height<=720]",
-        "-o", str(video), "--", "https://www.youtube.com/watch?v=" + video_id,
+        "--max-filesize", str(MAX_BYTES), "--match-filter",
+        "!is_live & duration <= 900" if youtube else "!is_live & duration <=? 900",
+        "-f", video_format, "-o", str(video), "--", source,
     ]
     with (work / "download.log").open("w+b") as log:
         with subprocess.Popen(command, stdout=log, stderr=log, start_new_session=True,
@@ -90,31 +122,54 @@ def prepare(video_id, work):
     if check.returncode != 0:
         return None, "unavailable"
     codecs = {entry.get("codec_name") for entry in json.loads(check.stdout).get("streams", [])}
-    return (video, None) if {"h264", "aac"} <= codecs else (None, "unavailable")
+    required = {"h264", "aac"} if youtube else {"h264"}
+    if not required <= codecs:
+        return None, "unavailable"
+    if tiktok:
+        decoded = subprocess.run(
+            ["/usr/bin/ffmpeg", "-v", "error", "-xerror", "-i", str(video), "-f", "null", "-"],
+            capture_output=True, timeout=35, check=False,
+        )
+        if decoded.returncode:
+            return None, "unavailable"
+    return video, None
+
+
+def process_queue(endpoint, token):
+    video_id = call(endpoint, token).get("id")
+    if not isinstance(video_id, str) or not source_for(video_id):
+        return False
+
+    with tempfile.TemporaryDirectory(prefix="snapreel-video-") as directory:
+        try:
+            video, reason = prepare(video_id, Path(directory))
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            video, reason = None, "unavailable"
+        if video:
+            call(endpoint, token, "PUT", video_id=video_id, video=video)
+        else:
+            call(endpoint, token, "POST", video_id=video_id, reason=reason)
+        print(video_id, "ready" if video else reason, flush=True)
+    return True
 
 
 def main():
+    queues = []
+    for prefix in QUEUE_PREFIXES:
+        endpoint = os.environ.get(prefix + "_ENDPOINT")
+        token = os.environ.get(prefix + "_TOKEN")
+        if endpoint and token and (endpoint, token) not in queues:
+            queues.append((endpoint, token))
+    if not queues:
+        raise RuntimeError("No download queue is configured")
     while True:
-        try:
-            video_id = call().get("id")
-            if not isinstance(video_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
-                time.sleep(12)
-                continue
-
-            with tempfile.TemporaryDirectory(prefix="snapreel-youtube-") as directory:
-                try:
-                    video, reason = prepare(video_id, Path(directory))
-                except (OSError, ValueError, subprocess.TimeoutExpired):
-                    video, reason = None, "unavailable"
-                if video:
-                    call("PUT", video_id=video_id, video=video)
-                else:
-                    call("POST", video_id=video_id, reason=reason)
-                print(video_id, "ready" if video else reason, flush=True)
-            time.sleep(30)
-        except (OSError, ValueError) as error:
-            print("SnapReel request failed:", type(error).__name__, getattr(error, "code", ""), flush=True)
-            time.sleep(30)
+        processed = False
+        for endpoint, token in queues:
+            try:
+                processed = process_queue(endpoint, token) or processed
+            except (OSError, ValueError) as error:
+                print("SnapReel request failed:", type(error).__name__, getattr(error, "code", ""), flush=True)
+        time.sleep(30 if processed else 12)
 
 
 if __name__ == "__main__":
